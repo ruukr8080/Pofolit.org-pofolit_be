@@ -1,18 +1,17 @@
 ### 개발 환경 (Development Environment)
-- `Java 21`, `Spring Boot 3.4.7` , `Gradle-jar`
-- IDE: `IntelliJ IDEA`
-- Management process: `sprint`
-- Database: {`h2-DB` | `PostgreSQL`}
-- CI/CD: {`GitHub Actions`,`Docker`} 
-- Dependency:
-  - `JPA` ,`mapstruct` , `flyway-core` 
-  - `Spring Security`, `JWT 11.5` , `OAuth2`
-  - `JUnit`, `Mockito`
-  - `Springdoc Swagger`
-  - Monitoring[미정]: Prometheus, Grafana
+- **Java 17**, **Spring Boot 3.4.7** , **Gradle-jar**
+- IDE: **IntelliJ IDEA**
+- Management process: **Notion** _sprint_style_
+- Database: { **MySQL** }
+- CI/CD: { **GitHub Actions**, **Docker** } 
+- Dependencies:
+  - JPA , mapstruct , flyway-core 
+  - Spring-Security ,  JWT 11.5 , OAuth2: _kakao,google_
+  - JUnit , Mockito
+  - Swagger-ui
 
-> backend port : 8080    
-> frontend port : 3000
+> backend port : http://localhost:8080/    
+> frontend port : http://localhost:3000/
  
 ---
 ### 디렉토리 구조
@@ -35,3 +34,4 @@ backend
       ├── security        // JWT, OAuth2 등 보안 관련 코드
       └── utils           // 공통 유틸리티 클래스
 ```
+
