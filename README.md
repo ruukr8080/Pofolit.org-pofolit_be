@@ -53,5 +53,3 @@
            └─service
                   OAuth2UserService.java
    ```
-
-    
