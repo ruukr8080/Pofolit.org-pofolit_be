@@ -6,7 +6,7 @@
 - CI/CD: { **GitHub Actions**, **Docker** } 
 - Dependencies:
   - JPA , mapstruct , flyway-core 
-  - Spring-Security ,  JWT 11.5 , OAuth2: _kakao,google_
+  - Spring-Security ,  JWT 12.6 , OAuth2: _kakao,google_
   - JUnit , Mockito
   - Swagger-ui
 
