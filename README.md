@@ -5,12 +5,12 @@
 - IDE: **IntelliJ IDEA**
 - Management process: **Notion** _sprint_style_
 - Database: { **MySQL** }
-- CI/CD: { **GitHub Actions**, **Docker** }
+- CI/CD: { **GitHub Actions**, **Docker** } 
 - Dependencies:
-    - JPA , mapstruct , flyway-core
-    - Spring-Security ,  JWT 12.6 , OAuth2: _kakao,google_
-    - JUnit , Mockito
-    - Swagger-ui
+  - JPA , mapstruct , flyway-core 
+  - Spring-Security ,  JWT 12.6 , OAuth2: _kakao,google_
+  - JUnit , Mockito
+  - Swagger-ui
 - 패키지 구조
     ```txt
    └─pofolit_be
@@ -53,3 +53,5 @@
            └─service
                   OAuth2UserService.java
    ```
+
+    

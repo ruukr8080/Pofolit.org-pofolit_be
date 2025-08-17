@@ -36,12 +36,37 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
+
+}
+
+
+def envFile = file('src/main/resources/.env')
+def env = [:]
+if (envFile.exists()) {
+    envFile.eachLine { line ->
+        if (line && !line.startsWith('#') && line.contains('=')) {
+            def (key, value) = line.split('=', 2)
+            env[key.trim()] = value.trim()
+        }
+    }
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    environment env
+}
+
+tasks.withType(org.springframework.boot.gradle.tasks.run.BootRun) {
+    environment env
 }
