@@ -13,7 +13,7 @@ import java.util.Map;
 @Getter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL) // null 값은 JSON에서 제외
-public class ErrorResponse {
+public class ApiResponse {
     
     private LocalDateTime timestamp;    // 오류 발생 시간
     private int status;                 // HTTP 상태 코드

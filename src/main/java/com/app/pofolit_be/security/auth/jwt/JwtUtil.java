@@ -25,7 +25,7 @@ public class JwtUtil {
     private final long expiration;
 
     public JwtUtil(@Value("${JWT_SECRET}") String secret,
-                   @Value("${JWT_EXPIRATION}") long expiration) {
+                   @Value("${JWT_EXP}") long expiration) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expiration = expiration * 1000; // 초를 밀리초로 변환
     }

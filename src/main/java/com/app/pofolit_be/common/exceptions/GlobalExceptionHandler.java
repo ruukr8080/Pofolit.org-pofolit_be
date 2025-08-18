@@ -27,10 +27,10 @@ public class GlobalExceptionHandler {
      * JWT 관련 예외 처리
      */
     @ExceptionHandler(JwtException.class)
-    public ResponseEntity<ErrorResponse> handleJwtException(JwtException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse> handleJwtException(JwtException ex, WebRequest request) {
         log.warn("JWT 예외 발생: {}", ex.getMessage());
         
-        ErrorResponse error = ErrorResponse.builder()
+        ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("JWT_ERROR")
@@ -45,10 +45,10 @@ public class GlobalExceptionHandler {
      * OAuth2 인증 예외 처리
      */
     @ExceptionHandler(OAuth2AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleOAuth2Exception(OAuth2AuthenticationException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse> handleOAuth2Exception(OAuth2AuthenticationException ex, WebRequest request) {
         log.warn("OAuth2 인증 예외 발생: {}", ex.getMessage());
         
-        ErrorResponse error = ErrorResponse.builder()
+        ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("OAUTH2_ERROR")
@@ -63,10 +63,10 @@ public class GlobalExceptionHandler {
      * 인증 실패 예외 처리
      */
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
         log.warn("인증 실패: {}", ex.getMessage());
         
-        ErrorResponse error = ErrorResponse.builder()
+        ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("AUTHENTICATION_FAILED")
@@ -81,10 +81,10 @@ public class GlobalExceptionHandler {
      * 권한 부족 예외 처리
      */
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
         log.warn("접근 권한 없음: {}", ex.getMessage());
         
-        ErrorResponse error = ErrorResponse.builder()
+        ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.FORBIDDEN.value())
                 .error("ACCESS_DENIED")
@@ -99,7 +99,7 @@ public class GlobalExceptionHandler {
      * Validation 예외 처리
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse> handleValidationExceptions(MethodArgumentNotValidException ex, WebRequest request) {
         log.warn("검증 오류: {}", ex.getMessage());
         
         Map<String, String> errors = new HashMap<>();
@@ -107,7 +107,7 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage())
         );
         
-        ErrorResponse error = ErrorResponse.builder()
+        ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("VALIDATION_FAILED")
@@ -123,10 +123,10 @@ public class GlobalExceptionHandler {
      * 일반적인 RuntimeException 처리
      */
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
         log.error("Runtime 예외 발생: {}", ex.getMessage(), ex);
         
-        ErrorResponse error = ErrorResponse.builder()
+        ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("INTERNAL_SERVER_ERROR")
@@ -141,10 +141,10 @@ public class GlobalExceptionHandler {
      * 모든 예외의 최종 처리기
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+    public ResponseEntity<ApiResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("예상치 못한 예외 발생: {}", ex.getMessage(), ex);
         
-        ErrorResponse error = ErrorResponse.builder()
+        ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("UNEXPECTED_ERROR")
