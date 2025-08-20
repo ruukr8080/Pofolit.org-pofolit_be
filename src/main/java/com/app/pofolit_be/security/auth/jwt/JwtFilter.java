@@ -1,7 +1,10 @@
 package com.app.pofolit_be.security.auth.jwt;
 
+import com.app.pofolit_be.user.dto.CustomUserDetails;
+import com.app.pofolit_be.user.dto.OAuth2UserDto;
 import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.repository.UserRepository;
+import com.app.pofolit_be.user.service.OAuth2UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,22 +44,24 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             // 1. JWT 토큰 추출
             String jwt = getJwtFromRequest(request);
+            log.info("jwt 추출 성공[{}]",jwt);
             // 2. 토큰 유효성 검증
             if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
                 UUID userId = jwtUtil.getUserIdFromToken(jwt);
                 String email = jwtUtil.getEmailFromToken(jwt);
                 String role = jwtUtil.getRoleFromToken(jwt);
-                
+                log.info("[{}][{}][{}]",userId,email,role);
                 // 사용자 정보 조회 (필요시 DB 조회)
                 Optional<User> userOptional = userRepository.findById(userId);
-                
+                log.info("userOptional [{}]",userOptional);
+
                 if (userOptional.isPresent()) {
                     User user = userOptional.get();
                     
                     // Spring Security 인증 객체 생성
                     UsernamePasswordAuthenticationToken authentication = 
                         new UsernamePasswordAuthenticationToken(
-                            user, 
+                            new CustomUserDetails(user),
                             null, 
                             Collections.singleton(new SimpleGrantedAuthority(role))
                         );

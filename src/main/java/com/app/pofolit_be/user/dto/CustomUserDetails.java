@@ -1,7 +1,9 @@
 package com.app.pofolit_be.user.dto;
 
 import com.app.pofolit_be.user.entity.User;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,6 +20,10 @@ public class CustomUserDetails implements OAuth2User {
    private final User user;
    private final Map<String, Object> attributes;
 
+   public CustomUserDetails(User user) {
+      this.user = user;
+      this.attributes = null;
+   }
    @Override
    public Map<String, Object> getAttributes() {
       return attributes;
