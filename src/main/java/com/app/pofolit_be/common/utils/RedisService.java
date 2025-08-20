@@ -26,7 +26,7 @@ public class RedisService {
       return value;
    }
    public void setValuesWithTimeout(String key,String value,long timeout) {
-      redis.opsForValue().set(key, value, timeout, TimeUnit.MICROSECONDS);
+      redis.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
 
    }
    // del

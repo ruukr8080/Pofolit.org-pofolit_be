@@ -11,14 +11,14 @@ public record OAuth2UserDto(
         String registrationId
 
 )  {
-   public User toEntity() {
+   public User toEntity(Role role) {
       return User.builder()
               .email(email)
               .nickname(nickname)
               .profileImageUrl(profileImageUrl)
               .registrationId(registrationId)
               .providerId(providerId)
-              .role(Role.USER) // 기본 역할은 USER로 설정
+              .role(role)
               .build();
    }
 }

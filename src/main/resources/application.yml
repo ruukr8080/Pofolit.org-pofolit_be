@@ -1,7 +1,7 @@
-app:
-  oauth2:
-    auth:
-      callback:
+uri:
+  auth:
+    base: "http://localhost:3000"
+    signup: "http://localhost:3000/signup/details"
 server:
   port: 8080
 logging:
@@ -31,7 +31,7 @@ spring:
     password: ${DB_PASSWORD:sa}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate #
     properties:
       hibernate:
         format_sql: true
