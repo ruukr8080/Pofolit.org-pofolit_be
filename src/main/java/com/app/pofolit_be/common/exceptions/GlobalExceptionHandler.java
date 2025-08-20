@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JWT, OAuth2, business 로직 관련 exception 일관된 형태로 처리함
+ * JWT, OAuth2, business exception
  */
 @Slf4j
 @RestControllerAdvice

@@ -1,5 +1,6 @@
-package com.app.pofolit_be.security.auth;
+package com.app.pofolit_be.security;
 
+import com.app.pofolit_be.security.auth.OAuth2AuthSuccessHandler;
 import com.app.pofolit_be.security.auth.jwt.JwtFilter;
 import com.app.pofolit_be.user.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;

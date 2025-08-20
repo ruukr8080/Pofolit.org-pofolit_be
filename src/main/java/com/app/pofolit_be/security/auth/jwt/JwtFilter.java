@@ -39,14 +39,15 @@ public class JwtFilter extends OncePerRequestFilter {
                                   FilterChain filterChain) throws ServletException, IOException {
         
         try {
+            // 1. JWT 토큰 추출
             String jwt = getJwtFromRequest(request);
-            
+            // 2. 토큰 유효성 검증
             if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
                 UUID userId = jwtUtil.getUserIdFromToken(jwt);
                 String email = jwtUtil.getEmailFromToken(jwt);
                 String role = jwtUtil.getRoleFromToken(jwt);
                 
-                // 사용자 정보 조회 (선택적 - 필요시 DB 조회)
+                // 사용자 정보 조회 (필요시 DB 조회)
                 Optional<User> userOptional = userRepository.findById(userId);
                 
                 if (userOptional.isPresent()) {

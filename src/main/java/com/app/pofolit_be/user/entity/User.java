@@ -27,8 +27,6 @@ public class User {
    private String providerId;
    private String registrationId;
 
-   private String refreshToken;
-
    @Enumerated(EnumType.STRING)
    private Role role;
 
