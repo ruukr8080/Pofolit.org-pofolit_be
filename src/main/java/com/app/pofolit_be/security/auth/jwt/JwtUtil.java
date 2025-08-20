@@ -25,7 +25,7 @@ public class JwtUtil {
     private final long expiration;
 
     public JwtUtil(@Value("${JWT_SECRET}") String secret,
-                   @Value("${JWT_EXPIRATION}") long expiration) {
+                   @Value("${JWT_EXP}") long expiration) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expiration = expiration * 1000; // 초를 밀리초로 변환
     }
@@ -96,7 +96,7 @@ public class JwtUtil {
     }
 
     /**
-     * JWT 토큰에서 특정 Claim 추출
+     * JWT 토큰 페이로드에서 특정 Claim 추출
      */
     public <T> T getClaimFromToken(String token, ClaimsResolver<T> claimsResolver) {
         final Claims claims = getAllClaimsFromToken(token);
@@ -139,7 +139,7 @@ public class JwtUtil {
             Date expiration = getExpirationDateFromToken(token);
             return expiration.before(new Date());
         } catch (JwtException e) {
-            return true; // 파싱 실패 시 만료된 것으로 간주 ㅇㅇ
+            return true; // 파싱 실패 시 만료된 것으로 간주
         }
     }
 

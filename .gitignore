@@ -7,10 +7,15 @@ wrapper/
 ### test ###
 **/src/test/**
 
+### mcp ###
+.junie
+
+### Secrets ###
+.env
+
 ### Node ###
 node_modules
 
-### Secrets ###
 src/main/resources/.env
 
 ### STS ###

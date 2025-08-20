@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!--
+  application.yml에 있는 logging.level 같은 설정이 먹히게 하는 스프링 부트의 기본 Logback 설정.
+  -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <!-- 개발 환경(dev)용 ConsoleAppender -->
+  <springProfile name="dev">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>${CONSOLE_LOG_PATTERN:-%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}</pattern>
+        <charset>utf8</charset>
+      </encoder>
+    </appender>
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <!-- 운영 환경(prod, default)용: JSON 로그 -->
+  <springProfile name="!dev">
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <fieldNames>
+          <timestamp>timestamp</timestamp>
+          <version>[ignore]</version>
+        </fieldNames>
+        <customFields>{"app_name":"pofolit-be"}</customFields>
+        <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider"/>
+      </encoder>
+    </appender>
+    <root level="INFO">
+      <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+  </springProfile>
+
+</configuration>

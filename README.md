@@ -1,11 +1,11 @@
 ### 개발 환경 (Development Environment)
 > backend port : http://localhost:8080/  
 > frontend port : http://localhost:3000/
-- **Java 17**, **Spring Boot 3.4.7** , **Gradle-jar**
+- **Java 17**, **Spring Boot 3.5.4** , **Gradle-jar**
 - IDE: **IntelliJ IDEA**
 - Management process: **Notion** _sprint_style_
 - Database: { **MySQL** }
-- CI/CD: { **GitHub Actions**, **Docker** } 
+- CI/CD: { **Jenkins**, **Docker** } 
 - Dependencies:
   - JPA , mapstruct , flyway-core 
   - Spring-Security ,  JWT 12.6 , OAuth2: _kakao,google_
@@ -53,5 +53,3 @@
            └─service
                   OAuth2UserService.java
    ```
-
-    
