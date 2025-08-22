@@ -1,8 +1,9 @@
 package com.app.pofolit_be.security;
 
-import com.app.pofolit_be.security.auth.OAuth2AuthSuccessHandler;
+import com.app.pofolit_be.security.auth.OAuth2SuccessHandler;
 import com.app.pofolit_be.security.auth.jwt.JwtFilter;
 import com.app.pofolit_be.user.service.OAuth2UserService;
+import com.app.pofolit_be.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -29,43 +31,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+   private static final String[] PERMIT_URLS = {
+           "/favicon.ico",
+           "/swagger-ui/**",
+           "/v3/**",
+           "/login/**",
+           "/api/auth/**",
+           "/api/v1/users/**"
+   };
+
    private final JwtFilter jwtFilter;
    private final OAuth2UserService oAuth2UserService;
-   private final OAuth2AuthSuccessHandler oAuth2AuthSuccessHandler;
-
-   private static final String[] PERMIT_URLS = {
-           "/",
-           "/login/**",
-           "/oauth2/**",
-           "/swagger-ui/**",
-           "/v3/api-docs/**",
-           "/token",
-//           "/api/v1/users/**"
-   };
+   private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
 
    @Bean
    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
       http
-              .cors(cors -> cors.configurationSource(corsConfigurationSource()))
               .csrf(AbstractHttpConfigurer::disable)
-//              .formLogin(AbstractHttpConfigurer::disable)
+              .formLogin(AbstractHttpConfigurer::disable)
               .httpBasic(AbstractHttpConfigurer::disable)
-
-              .sessionManagement(session -> session
-                      .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+              .cors(cors -> cors.configurationSource(corsConfigurationSource()))
               .authorizeHttpRequests(auth -> auth
                       .requestMatchers(PERMIT_URLS).permitAll()
-                      .anyRequest().authenticated()
-              )
+                      .anyRequest().authenticated())
+              .sessionManagement(session -> session
+                      .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+              .addFilterBefore(jwtFilter,
+                      UsernamePasswordAuthenticationFilter.class)
               .oauth2Login(oauth2 -> oauth2
+                      .successHandler(oAuth2SuccessHandler)
                       .userInfoEndpoint(userInfo -> userInfo
-                              .userService(oAuth2UserService))
-                      .successHandler(oAuth2AuthSuccessHandler) // 로그인 성공 시 JWT 토큰 발급
-              )
-              // UsernamePasswordFilter 앞에서 JWT 필터가 먼저 필터링.
-              .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
+                              .oidcUserService(oAuth2UserService)));
       return http.build();
    }
 
@@ -73,7 +70,7 @@ public class SecurityConfig {
    public CorsConfigurationSource corsConfigurationSource() {
       CorsConfiguration cors = new CorsConfiguration();
       cors.setAllowedOrigins(List.of("http://localhost:3000"));
-      cors.setAllowedHeaders(List.of("Authorization", "Content-Type")); // 실제 사용하는 헤더만 명시적으로 허용
+      cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
       cors.setAllowedMethods(
               Arrays.asList(
                       HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PUT.name(),

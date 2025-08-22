@@ -13,10 +13,8 @@ spring:
     active: dev
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
-      username: ${REDIS_USER:pofolit}
-      password: ${REDIS_PASSWORD:sa}
       database: 0
       timeout: 2000ms
       lettuce:
@@ -31,7 +29,7 @@ spring:
     password: ${DB_PASSWORD:sa}
   jpa:
     hibernate:
-      ddl-auto: validate #
+      ddl-auto: update #
     properties:
       hibernate:
         format_sql: true

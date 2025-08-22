@@ -1,6 +1,7 @@
 package com.app.pofolit_be.common.exceptions;
 
 import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,9 +64,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+
     /**
-     * 인증 실패 예외 처리
+     * 인증 실패 시 에러 페이지로 리다이렉트
+     * @param response      HttpServletResponse
+     * @param errorCode     에러 코드
+     * @param errorMessage  에러 메시지
      */
+//    private void handleAuthenticationError(HttpServletResponse response, String errorCode, String errorMessage) throws IOException {
+//        String errorUrl = UriComponentsBuilder.fromUriString(baseUri)
+//                .queryParam("error", errorCode)
+//                .queryParam("message", URLEncoder.encode(errorMessage, StandardCharsets.UTF_8))
+//                .build()
+//                .toUriString();
+//        getRedirectStrategy().sendRedirect(null, response, errorUrl);
+//    }
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
         log.warn("인증 실패: {}", ex.getMessage());
