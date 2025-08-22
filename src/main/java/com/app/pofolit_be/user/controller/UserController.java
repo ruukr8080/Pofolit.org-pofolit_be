@@ -1,33 +1,37 @@
 package com.app.pofolit_be.user.controller;
 
-import com.app.pofolit_be.user.dto.CustomUserDetails;
-import com.app.pofolit_be.user.dto.UserDetailsDto;
-import com.app.pofolit_be.user.repository.UserRepository;
+import com.app.pofolit_be.user.dto.SignupRequest;
+import com.app.pofolit_be.user.dto.UserPrincipal;
+import com.app.pofolit_be.user.dto.UserResponseDto;
 import com.app.pofolit_be.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
 public class UserController {
 
    private final UserService userService;
 
+   /*
+    * current user's detail info  */
+   @GetMapping("/me")
+   public ResponseEntity<UserResponseDto> getUserDetails(
+           @AuthenticationPrincipal UserPrincipal userPrincipal) {
+      UserResponseDto userResponseDto = userService.getUserInfo(userPrincipal.getUser().getId());
+      return ResponseEntity.ok(userResponseDto);
+   }
 
+   /*
+    * update or register after login  */
    @PatchMapping("/me/details")
-   public ResponseEntity<Void> registration(
-           @AuthenticationPrincipal CustomUserDetails userDetails,
-           @RequestBody UserDetailsDto requestDto) {
-      userService.completeRegistration(userDetails.getUser().getId(), requestDto);
-      log.info("권한 변경 성공 [{}]",userDetails.getUser().getRole());
+   public ResponseEntity<Void> signup(
+           @AuthenticationPrincipal UserPrincipal userPrincipal,
+           @RequestBody SignupRequest signupRequest) {
+      userService.signup(userPrincipal.getUser().getId(), signupRequest);
       return ResponseEntity.ok().build();
    }
 }

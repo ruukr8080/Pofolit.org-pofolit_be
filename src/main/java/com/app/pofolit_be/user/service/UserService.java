@@ -1,7 +1,8 @@
 package com.app.pofolit_be.user.service;
 
 import com.app.pofolit_be.user.dto.OAuth2UserDto;
-import com.app.pofolit_be.user.dto.UserDetailsDto;
+import com.app.pofolit_be.user.dto.SignupRequest;
+import com.app.pofolit_be.user.dto.UserResponseDto;
 import com.app.pofolit_be.user.entity.Role;
 import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.repository.UserRepository;
@@ -13,10 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /*
- * Facade service
+ * Guest로 저장 된 유저 signup or
+ * USER로 저장 된 유저 update. upadte는 user에.
  *
  * */
 @Service
@@ -26,28 +29,53 @@ public class UserService {
    private final UserRepository userRepository;
 
    @Transactional(propagation = Propagation.REQUIRES_NEW)
-   public User findOrSaveUser(OAuth2UserDto userDto) {
-      return userRepository.findByRegistrationIdAndProviderId(userDto.registrationId(), userDto.providerId())
-              .map(existingUser -> {
-                 existingUser.updateProfile(userDto.nickname(), userDto.profileImageUrl());
-                 log.info("정상 로그인 userId{}", existingUser.getId());
-                 return existingUser.updateProfile(userDto.nickname(), userDto.profileImageUrl());
-              })
-              .orElseGet(() -> {
-                 userRepository.findUserByEmail(userDto.email()).ifPresent(existingUserByEmail -> {
-                    log.warn("가입 전적 있음.email{}", userDto.email());
-                    throw new OAuth2AuthorizationException(
-                            new OAuth2Error("ErrorCode:email_in_use", "이미 가입 된 이메일입니다", "uri[]"));
-                 });
-                 log.info("GUEST로 저장.{}", userDto.email());
-                 return userRepository.save(userDto.toEntity(Role.GUEST));
-              });
+   public User updateOrSaveUser(OAuth2UserDto userDto) {
+      if(userRepository.findUserByEmail(userDto.email()).isEmpty()){
+         User newUser = User.builder()
+                 .email(userDto.email())
+                 .nickname(userDto.nickname())
+                 .profileImageUrl(userDto.profileImageUrl())
+                 .role(Role.GUEST)
+                 .build();
+         return userRepository.save(newUser);
+      }else {
+          User existingUser = User.builder()
+                  .nickname(userDto.nickname())
+                  .profileImageUrl(userDto.profileImageUrl())
+                  .build();
+         return userRepository.save(existingUser);
+      }
+   }
+   @Transactional(readOnly = true)
+   public User getUserByEmail(String email) {
+      return userRepository.findUserByEmail(email).orElseThrow(() ->
+              new IllegalArgumentException("User not found with email " + email));
    }
 
    @Transactional
-   public void completeRegistration(UUID userid, UserDetailsDto userDetailDto) {
+   public void signup(UUID userId, SignupRequest signupRequest) {
+      User user = userRepository.findById(userId)
+              .orElseThrow(()-> new IllegalArgumentException("nono"+userId));
+
+      if(!user.getRole().equals(Role.GUEST)){
+         throw new IllegalStateException("already member");
+      }
+      user.signup(signupRequest);
+      log.info("가입 완료! [{}]", user.getEmail());
+   }
+
+   @Transactional
+   public UserResponseDto getUserInfo(UUID userid) {
       User user = userRepository.findById(userid)
+              .map(u ->{
+                 u.getEmail();
+                 u.getNickname();
+                 u.getProfileImageUrl();
+                 log.info("res! [{}] [{}] [{}]",u.getEmail(),u.getNickname(),u.getProfileImageUrl());
+                 return u;
+              })
               .orElseThrow(() -> new IllegalArgumentException("userid 없음"));
-      user.completeRegistration(userDetailDto);
+      log.info("response! [{}] [{}]",user.getEmail(),user.getNickname());
+      return UserResponseDto.from(user);
    }
 }
