@@ -58,7 +58,10 @@ public class UserService {
          throw new IllegalStateException("already member");
       }
       user.signup(signupRequest);
-      log.info("가입 완료! [{}]", user.getEmail());
+      log.info("\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
+              user.getEmail(),user.getNickname(),user.getProfileImageUrl().isEmpty()?"no image":"O",
+              user.getBirthDay(),user.getJob(),user.getDomain(),user.getInterests(),
+              user.getRole().getKey(),!user.getRefreshToken().isEmpty()?"fail":"O");
    }
 
    @Transactional
@@ -68,7 +71,6 @@ public class UserService {
                  u.getEmail();
                  u.getNickname();
                  u.getProfileImageUrl();
-                 log.info("res! [{}] [{}] [{}]",u.getEmail(),u.getNickname(),u.getProfileImageUrl());
                  return u;
               })
               .orElseThrow(() -> new IllegalArgumentException("userid 없음"));

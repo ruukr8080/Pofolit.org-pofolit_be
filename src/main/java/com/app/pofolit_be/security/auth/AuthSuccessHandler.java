@@ -52,10 +52,8 @@ public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
          String tokens = jwtService.issueTokensAndSave(user);
          String targetUrl = buildRedirectUrl(user.getRole(), tokens);
          getRedirectStrategy().sendRedirect(request, response, targetUrl);
-         log.info("\nJWT_payload: \n  ID [{}] \n  EMAIL [{}] \n  nick [{}] \n  ROLE [{}]", user.getId(), user.getEmail(), user.getNickname(), user.getRole().getKey());
-         log.info("\nToken: [{}]", !user.getRefreshToken().isEmpty());
-         log.info("\n{}", targetUrl);
-
+         log.info("\nJWT_payload: \n  ID [{}] \n  EMAIL [{}] \n  nick [{}] \n  ROLE [{}]\nToken: [{}]\n{}",
+                 user.getId(), user.getEmail(), user.getNickname(), user.getRole().getKey(),!user.getRefreshToken().isEmpty(),targetUrl);
       } catch (Exception e) {
          log.error("OAuth2 인증 처리 중 예외 발생: {}", e.getMessage(), e);
          handleAuthenticationError(request, response, "auth_redirect", "인증 처리 중 서버 오류가 발생했습니다.");

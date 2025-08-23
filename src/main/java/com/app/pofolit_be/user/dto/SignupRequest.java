@@ -10,7 +10,7 @@ import java.util.List;
  * */
 public record SignupRequest(
         String nickname,
-        @JsonProperty("birthDay")
+        @JsonProperty("birth_day")
         LocalDate birthDay,
         String domain,
         String job,

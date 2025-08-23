@@ -65,20 +65,7 @@ public class GlobalExceptionHandler {
     }
 
 
-    /**
-     * 인증 실패 시 에러 페이지로 리다이렉트
-     * @param response      HttpServletResponse
-     * @param errorCode     에러 코드
-     * @param errorMessage  에러 메시지
-     */
-//    private void handleAuthenticationError(HttpServletResponse response, String errorCode, String errorMessage) throws IOException {
-//        String errorUrl = UriComponentsBuilder.fromUriString(baseUri)
-//                .queryParam("error", errorCode)
-//                .queryParam("message", URLEncoder.encode(errorMessage, StandardCharsets.UTF_8))
-//                .build()
-//                .toUriString();
-//        getRedirectStrategy().sendRedirect(null, response, errorUrl);
-//    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
         log.warn("인증 실패: {}", ex.getMessage());
@@ -160,7 +147,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("예상치 못한 예외 발생: {}", ex.getMessage(), ex);
-        
+
         ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
@@ -168,7 +155,7 @@ public class GlobalExceptionHandler {
                 .message("예상치 못한 오류가 발생했습니다")
                 .path(getPath(request))
                 .build();
-                
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
