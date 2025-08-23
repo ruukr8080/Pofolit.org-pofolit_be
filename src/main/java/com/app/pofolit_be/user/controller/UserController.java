@@ -27,7 +27,7 @@ public class UserController {
 
    /*
     * update or register after login  */
-   @PatchMapping("/me/details")
+   @PatchMapping("/signup")
    public ResponseEntity<Void> signup(
            @AuthenticationPrincipal UserPrincipal userPrincipal,
            @RequestBody SignupRequest signupRequest) {

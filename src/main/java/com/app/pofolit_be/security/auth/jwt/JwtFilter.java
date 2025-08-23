@@ -79,7 +79,7 @@ public class JwtFilter extends OncePerRequestFilter {
       User user = User.builder()
               .id(userId)
               .email(email)
-              .role(Role.valueOf(roleKey))
+              .role(Role.fromKey(roleKey))
               .build();
       return new UserPrincipal(user, jwtUtil.getAllClaimsFromToken(token));
    }
