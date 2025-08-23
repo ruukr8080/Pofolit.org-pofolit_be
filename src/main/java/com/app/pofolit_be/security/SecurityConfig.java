@@ -1,9 +1,8 @@
 package com.app.pofolit_be.security;
 
-import com.app.pofolit_be.security.auth.OAuth2SuccessHandler;
+import com.app.pofolit_be.security.auth.AuthSuccessHandler;
 import com.app.pofolit_be.security.auth.jwt.JwtFilter;
-import com.app.pofolit_be.user.service.OAuth2UserService;
-import com.app.pofolit_be.user.service.UserService;
+import com.app.pofolit_be.security.auth.SignService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +11,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -41,8 +39,8 @@ public class SecurityConfig {
    };
 
    private final JwtFilter jwtFilter;
-   private final OAuth2UserService oAuth2UserService;
-   private final OAuth2SuccessHandler oAuth2SuccessHandler;
+   private final SignService oAuth2UserService;
+   private final AuthSuccessHandler authSuccessHandler;
 
 
    @Bean
@@ -60,7 +58,7 @@ public class SecurityConfig {
               .addFilterBefore(jwtFilter,
                       UsernamePasswordAuthenticationFilter.class)
               .oauth2Login(oauth2 -> oauth2
-                      .successHandler(oAuth2SuccessHandler)
+                      .successHandler(authSuccessHandler)
                       .userInfoEndpoint(userInfo -> userInfo
                               .oidcUserService(oAuth2UserService)));
       return http.build();

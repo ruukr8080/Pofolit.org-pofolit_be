@@ -32,7 +32,7 @@ public class JwtUtil {
                   @Value("${JWT_EXP}") long refreshExp) {
       this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
       this.accessExp = accessExp * 1000;
-      this.refreshExp = refreshExp * 1000;
+      this.refreshExp = (refreshExp+3000) * 1000;
    }
 
    /**
@@ -128,7 +128,7 @@ public class JwtUtil {
    /**
     * JWT 토큰에서 모든 Claims 추출
     */
-   private Claims getAllClaimsFromToken(String token) {
+   public Claims getAllClaimsFromToken(String token) {
       return Jwts.parser()
               .verifyWith(key)
               .build()

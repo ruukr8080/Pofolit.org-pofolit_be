@@ -1,6 +1,5 @@
 package com.app.pofolit_be.user.entity;
 
-import com.app.pofolit_be.user.dto.OAuth2UserDto;
 import com.app.pofolit_be.user.dto.SignupRequest;
 import jakarta.persistence.*;
 import lombok.*;
@@ -51,7 +50,8 @@ public class User {
    private String refreshToken;
 
    @Builder
-   public User(String email, String nickname, String profileImageUrl, String providerId, String registrationId, Role role) {
+   public User(UUID id,String email, String nickname, String profileImageUrl, String providerId, String registrationId, Role role) {
+      this.id = id;
       this.email = email;
       this.nickname = nickname;
       this.profileImageUrl = profileImageUrl;

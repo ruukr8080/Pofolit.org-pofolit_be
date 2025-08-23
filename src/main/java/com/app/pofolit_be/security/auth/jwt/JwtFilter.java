@@ -1,8 +1,8 @@
 package com.app.pofolit_be.security.auth.jwt;
 
 import com.app.pofolit_be.user.dto.UserPrincipal;
+import com.app.pofolit_be.user.entity.Role;
 import com.app.pofolit_be.user.entity.User;
-import com.app.pofolit_be.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +17,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -30,7 +29,6 @@ import java.util.UUID;
 public class JwtFilter extends OncePerRequestFilter {
 
    private final JwtUtil jwtUtil;
-   private final UserRepository userRepository;
 
    @Override
    protected void doFilterInternal(HttpServletRequest request,
@@ -39,39 +37,25 @@ public class JwtFilter extends OncePerRequestFilter {
 
       try {
          // 1. JWT 토큰 추출
-         String jwt = getJwtFromRequest(request);
-         log.info("jwt 추출 [{}]", jwt);
-
+         String token = getJwtFromRequest(request);
          // 2. 토큰 유효성 검증
-         if(StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
-            UUID userId = jwtUtil.getUserIdFromToken(jwt);
-            String email = jwtUtil.getEmailFromToken(jwt);
-            String role = jwtUtil.getRoleFromToken(jwt);
-            log.info("[{}][{}][{}]", userId, email, role);
-            // 사용자 정보 조회 (필요시 DB 조회)
-            Optional<User> userOptional = userRepository.findById(userId);
-            log.info("userOptional [{}]", userOptional);
+         if(StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
+            // 3. 토큰에서 사용자 정보 추출 (DB 조회 X)
+            UserPrincipal userPrincipal = createUserPrincipalFromToken(token);
 
-            if(userOptional.isPresent()) {
-               User user = userOptional.get();
-               UserPrincipal userPrincipal = new UserPrincipal(user, null);
-               // Spring Security 인증 객체 생성
-               UsernamePasswordAuthenticationToken authentication =
-                       new UsernamePasswordAuthenticationToken(
-                               userPrincipal,
-                               null,
-                               userPrincipal.getAuthorities()
-                       );
+            // 4. Spring Security 인증 객체 생성 및 Context에 저장
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userPrincipal, null, userPrincipal.getAuthorities());
 
-               authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-               // Security Context에 인증 정보 설정
-               SecurityContextHolder.getContext().setAuthentication(authentication);
-
-               log.debug("JWT 인증 성공: userId={}, email={}, role={}", userId, email, role);
-            } else {
-               log.warn("JWT는 유효하지만 사용자 정보를 찾을 수 없음: userId={}", userId);
-            }
+            log.debug(
+                    "JWT 인증 성공: userId={}, email={}, role={}",
+                    userPrincipal.getUser().getId(),
+                    userPrincipal.getUsername(),
+                    userPrincipal.getAuthorities());
          }
       } catch (Exception e) {
          log.error("JWT 필터에서 인증 처리 중 오류 발생: {}", e.getMessage());
@@ -80,6 +64,24 @@ public class JwtFilter extends OncePerRequestFilter {
       }
 
       filterChain.doFilter(request, response);
+   }
+
+   /**
+    * DB 조회 없이 토큰의 Claim만으로 UserPrincipal 객체를 생성한다.
+    *
+    * @param token 유효성이 검증된 JWT
+    * @return UserPrincipal 객체
+    */
+   private UserPrincipal createUserPrincipalFromToken(String token) {
+      UUID userId = jwtUtil.getUserIdFromToken(token);
+      String email = jwtUtil.getEmailFromToken(token);
+      String roleKey = jwtUtil.getRoleFromToken(token);
+      User user = User.builder()
+              .id(userId)
+              .email(email)
+              .role(Role.valueOf(roleKey))
+              .build();
+      return new UserPrincipal(user, jwtUtil.getAllClaimsFromToken(token));
    }
 
    /**

@@ -1,6 +1,6 @@
 package com.app.pofolit_be.user.mapper;
 
-import com.app.pofolit_be.user.dto.OAuth2UserDto;
+import com.app.pofolit_be.user.dto.SignDto;
 import org.springframework.stereotype.Component;
 import java.util.Map;
 
@@ -16,7 +16,7 @@ public class OAuth2AttributeMapper {
     * @param attributes 사용자 정보 속성 맵
     * @return 통일된 OAuth2UserDto 객체
     */
-   public OAuth2UserDto getOAuth2UserDto(String registrationId, Map<String, Object> attributes) {
+   public SignDto getOAuth2UserDto(String registrationId, Map<String, Object> attributes) {
       String email, nickname, profileImageUrl;
       String providerId = String.valueOf(attributes.get("sub"));
 
@@ -37,6 +37,6 @@ public class OAuth2AttributeMapper {
             throw new IllegalArgumentException("Unsupported registrationId: " + registrationId);
       }
 
-      return new OAuth2UserDto(email, nickname, profileImageUrl, registrationId, providerId);
+      return new SignDto(email, nickname, profileImageUrl, registrationId, providerId);
    }
 }

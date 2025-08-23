@@ -1,7 +1,7 @@
 uri:
   auth:
     base: "http://localhost:3000"
-    signup: "http://localhost:3000/signup/details"
+    signup: "http://localhost:3000/signup"
 server:
   port: 8080
 logging:
@@ -44,7 +44,7 @@ spring:
     clean-disabled: false
   jwt:
     secret: ${JWT_SECRET:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
-    expiration: ${JWT_EXP:3600}
+    expiration: ${JWT_EXP:300}
   security:
     oauth2:
       client:
