@@ -1,5 +1,6 @@
 package com.app.pofolit_be.security.auth;
 
+import com.app.pofolit_be.security.auth.jwt.JwtService;
 import com.app.pofolit_be.security.auth.jwt.JwtUtil;
 import com.app.pofolit_be.user.dto.UserPrincipal;
 import com.app.pofolit_be.user.entity.Role;
@@ -11,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -27,10 +27,11 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
    private final JwtUtil jwtUtil;
    private final UserRepository userRepository;
+   private final JwtService jwtService;
 
    @Value("${uri.auth.base}")
    private String baseUri;
@@ -41,46 +42,24 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
    public void onAuthenticationSuccess(HttpServletRequest request,
                                        HttpServletResponse response,
                                        Authentication authentication) throws IOException {
-      // 1. user info from Principal
-      User user = null;
-      if(authentication.getPrincipal() instanceof UserPrincipal) {
+      try {
          UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-         user = principal.getUser();
-      } else if(authentication.getPrincipal() instanceof OAuth2User) {
-         // OAuth2UserService (디버깅용)
-         OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
-         log.warn("oauth2User type {} ", oauth2User.getClass().getName());
-         handleAuthenticationError(request, response, "auth_error", "FAIL -> input additional info");
-         return;
-      }
-      //2. create token access, refresh
-      String accessToken;
-      String refreshToken;
-      userRepository.save(user);
-      try {
-         accessToken = jwtUtil.generateAccessToken(
-                 user.getId(),
-                 user.getEmail(),
-                 user.getNickname(),
-                 user.getProfileImageUrl(),
-                 user.getRole().getKey());
-         refreshToken = jwtUtil.generateRefreshToken(user.getId());
-         user.updateRefreshToken(refreshToken);
-      } catch (Exception e) {
-         handleAuthenticationError(request, response, "auth_token", "ERROR");
-         return;
-      }
-      String targetUrl;
-      try {
-         // 4. buildRedirectUrl targetUrl
-         targetUrl = buildRedirectUrl(user.getRole(), accessToken);
+         log.info("type of sign [{}],", principal.getClass().getName());
+
+         //2. create token access, refresh
+         User user = principal.getUser();
+
+         String tokens = jwtService.issueTokensAndSave(user);
+         String targetUrl = buildRedirectUrl(user.getRole(), tokens);
          getRedirectStrategy().sendRedirect(request, response, targetUrl);
-         log.info("\nJWT_payload: \n  ID [{}] \n  EMAIL [{}] \n  nick [{}] \n  ROLE [{}]\n{}  ", user.getId(), user.getEmail(), user.getNickname(), user.getRole().getKey(), targetUrl);
+         log.info("\nJWT_payload: \n  ID [{}] \n  EMAIL [{}] \n  nick [{}] \n  ROLE [{}]", user.getId(), user.getEmail(), user.getNickname(), user.getRole().getKey());
+         log.info("\nToken: [{}]", !user.getRefreshToken().isEmpty());
+         log.info("\n{}", targetUrl);
+
       } catch (Exception e) {
          log.error("OAuth2 인증 처리 중 예외 발생: {}", e.getMessage(), e);
          handleAuthenticationError(request, response, "auth_redirect", "인증 처리 중 서버 오류가 발생했습니다.");
       }
-
    }
 
    /**
@@ -105,7 +84,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     * @param errorCode 에러 코드
     * @param errorMessage 에러 메시지
     */
-   private void handleAuthenticationError(HttpServletRequest request, HttpServletResponse response, String errorCode, String errorMessage) throws IOException {
+   private void handleAuthenticationError(HttpServletRequest request, HttpServletResponse response, String
+           errorCode, String errorMessage) throws IOException {
       String errorUrl = UriComponentsBuilder.fromUriString(baseUri)
               .queryParam("error", errorCode)
               .queryParam("message", URLEncoder.encode(errorMessage, StandardCharsets.UTF_8))

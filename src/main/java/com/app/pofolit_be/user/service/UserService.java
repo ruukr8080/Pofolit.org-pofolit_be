@@ -1,6 +1,6 @@
 package com.app.pofolit_be.user.service;
 
-import com.app.pofolit_be.user.dto.OAuth2UserDto;
+import com.app.pofolit_be.user.dto.SignDto;
 import com.app.pofolit_be.user.dto.SignupRequest;
 import com.app.pofolit_be.user.dto.UserResponseDto;
 import com.app.pofolit_be.user.entity.Role;
@@ -8,13 +8,10 @@ import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.UUID;
 
 /*
@@ -29,7 +26,7 @@ public class UserService {
    private final UserRepository userRepository;
 
    @Transactional(propagation = Propagation.REQUIRES_NEW)
-   public User updateOrSaveUser(OAuth2UserDto userDto) {
+   public User updateOrSaveUser(SignDto userDto) {
       if(userRepository.findUserByEmail(userDto.email()).isEmpty()){
          User newUser = User.builder()
                  .email(userDto.email())

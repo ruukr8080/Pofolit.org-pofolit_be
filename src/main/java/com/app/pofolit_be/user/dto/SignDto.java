@@ -1,6 +1,6 @@
 package com.app.pofolit_be.user.dto;
 
-public record OAuth2UserDto(
+public record SignDto(
         String email,
         String nickname,
         String profileImageUrl,
