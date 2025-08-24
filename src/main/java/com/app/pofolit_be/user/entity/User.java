@@ -50,7 +50,7 @@ public class User {
    private String refreshToken;
 
    @Builder
-   public User(UUID id,String email, String nickname, String profileImageUrl, String providerId, String registrationId, Role role) {
+   public User(UUID id, String email, String nickname, String profileImageUrl, String providerId, String registrationId, Role role) {
       this.id = id;
       this.email = email;
       this.nickname = nickname;
@@ -60,18 +60,20 @@ public class User {
       this.role = role;
    }
 
-   public void updateSocialProfile(User user) {
-      this.nickname = user.nickname;
-      this.profileImageUrl = user.profileImageUrl;
-//      return this;
+   public void updateSocialProfile(String nickname, String profileImageUrl) {
+      this.nickname = nickname;
+      this.profileImageUrl = profileImageUrl;
+      //      return this;
    }
 
+   // 리프레시 토큰 생성하ㅏㄹ때 파라미터 : new HashMap<>(), userId.toString(), refreshExp
    public void updateRefreshToken(String refreshToken) {
       this.refreshToken = refreshToken;
    }
 
    public void signup(SignupRequest request) {
       this.nickname = request.nickname();
+      this.birthDay = request.birthDay();
       this.domain = request.domain();
       this.job = request.job();
       this.interests = request.interests();

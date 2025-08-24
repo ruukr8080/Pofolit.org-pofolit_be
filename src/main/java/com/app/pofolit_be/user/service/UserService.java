@@ -9,14 +9,12 @@ import com.app.pofolit_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.UUID;
 
-/*
- * Guest로 저장 된 유저 signup or
- * USER로 저장 된 유저 update. upadte는 user에.
+/**
  *
  * */
 @Service
@@ -25,24 +23,26 @@ import java.util.UUID;
 public class UserService {
    private final UserRepository userRepository;
 
-   @Transactional(propagation = Propagation.REQUIRES_NEW)
+   @Transactional
    public User updateOrSaveUser(SignDto userDto) {
-      if(userRepository.findUserByEmail(userDto.email()).isEmpty()){
-         User newUser = User.builder()
-                 .email(userDto.email())
-                 .nickname(userDto.nickname())
-                 .profileImageUrl(userDto.profileImageUrl())
-                 .role(Role.GUEST)
-                 .build();
-         return userRepository.save(newUser);
-      }else {
-          User existingUser = User.builder()
-                  .nickname(userDto.nickname())
-                  .profileImageUrl(userDto.profileImageUrl())
-                  .build();
-         return userRepository.save(existingUser);
-      }
+      return userRepository.findByRegistrationIdAndProviderId(userDto.registrationId(), userDto.providerId())
+              .map(existingUser -> {
+                 existingUser.updateSocialProfile(userDto.nickname(), userDto.profileImageUrl());
+                 return existingUser;
+              })
+              .orElseGet(() -> {
+                 User newUser = User.builder()
+                         .email(userDto.email())
+                         .nickname(userDto.nickname())
+                         .profileImageUrl(userDto.profileImageUrl())
+                         .registrationId(userDto.registrationId())
+                         .providerId(userDto.providerId())
+                         .role(Role.GUEST)
+                         .build();
+                 return userRepository.save(newUser);
+              });
    }
+
    @Transactional(readOnly = true)
    public User getUserByEmail(String email) {
       return userRepository.findUserByEmail(email).orElseThrow(() ->
@@ -52,29 +52,30 @@ public class UserService {
    @Transactional
    public void signup(UUID userId, SignupRequest signupRequest) {
       User user = userRepository.findById(userId)
-              .orElseThrow(()-> new IllegalArgumentException("nono"+userId));
+              .orElseThrow(() -> new IllegalArgumentException("nono" + userId));
 
-      if(!user.getRole().equals(Role.GUEST)){
+      if(!user.getRole().equals(Role.GUEST)) {
          throw new IllegalStateException("already member");
       }
       user.signup(signupRequest);
-      log.info("\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
-              user.getEmail(),user.getNickname(),user.getProfileImageUrl().isEmpty()?"no image":"O",
-              user.getBirthDay(),user.getJob(),user.getDomain(),user.getInterests(),
-              user.getRole().getKey(),!user.getRefreshToken().isEmpty()?"fail":"O");
+      log.info("\nJOIN : \n  ID [{}] \n  EMAIL [{}] \n  nick [{}] \n  프사[{}]\n  ROLE [{}]\n \n  Birth [{}] \n  직업 [{}] \n  분야 [{}]  관심사 목록 [{}]\n 토큰 : '{}'",
+              user.getId(), user.getEmail(), user.getNickname(), StringUtils.hasText(user.getProfileImageUrl()) ? "no image" : "O",
+              user.getBirthDay(), user.getJob(), user.getDomain(), user.getInterests(),
+              user.getRole().getKey(), !StringUtils.hasText(user.getRefreshToken()) ? "없음":"있음");
    }
 
    @Transactional
    public UserResponseDto getUserInfo(UUID userid) {
       User user = userRepository.findById(userid)
-              .map(u ->{
+              .map(u -> {
                  u.getEmail();
                  u.getNickname();
                  u.getProfileImageUrl();
+                 log.info("response! [{}] [{}]", u.getEmail(), u.getNickname());
                  return u;
               })
               .orElseThrow(() -> new IllegalArgumentException("userid 없음"));
-      log.info("response! [{}] [{}]",user.getEmail(),user.getNickname());
+      log.info("response! [{}] [{}]", user.getEmail(), user.getNickname());
       return UserResponseDto.from(user);
    }
 }

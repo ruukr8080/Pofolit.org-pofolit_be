@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
@@ -42,18 +43,17 @@ public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
    public void onAuthenticationSuccess(HttpServletRequest request,
                                        HttpServletResponse response,
                                        Authentication authentication) throws IOException {
+
       try {
          UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
          log.info("type of sign [{}],", principal.getClass().getName());
-
          //2. create token access, refresh
          User user = principal.getUser();
-
          String tokens = jwtService.issueTokensAndSave(user);
          String targetUrl = buildRedirectUrl(user.getRole(), tokens);
          getRedirectStrategy().sendRedirect(request, response, targetUrl);
-         log.info("\nJWT_payload: \n  ID [{}] \n  EMAIL [{}] \n  nick [{}] \n  ROLE [{}]\nToken: [{}]\n{}",
-                 user.getId(), user.getEmail(), user.getNickname(), user.getRole().getKey(),!user.getRefreshToken().isEmpty(),targetUrl);
+         log.info("\nNEW User: [{}]\n  ID [{}] \n  EMAIL [{}] \n  NICK [{}] \n  프사[{}]\n  providerId [{}]\n  registration [{}]\n  Token: ['{}'] ",
+                 user.getRole(), user.getId(), user.getEmail(), user.getNickname(),StringUtils.hasText(user.getProfileImageUrl())? "있음" : "없음" ,user.getProviderId(),user.getRegistrationId(), user.getRefreshToken());
       } catch (Exception e) {
          log.error("OAuth2 인증 처리 중 예외 발생: {}", e.getMessage(), e);
          handleAuthenticationError(request, response, "auth_redirect", "인증 처리 중 서버 오류가 발생했습니다.");
@@ -62,7 +62,6 @@ public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
    /**
     * 유저 역할에 따라 리다이렉트할 URL 생성
-    *
     * @param role User Role
     * @param jwtToken 생성된 JWT 토큰
     * @return 리다이렉트 URL
@@ -77,7 +76,6 @@ public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
    /**
     * 인증 실패 시 에러 페이지로 리다이렉트
-    *
     * @param response HttpServletResponse
     * @param errorCode 에러 코드
     * @param errorMessage 에러 메시지
