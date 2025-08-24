@@ -55,8 +55,8 @@ public class JwtUtil {
    }
 
    /**
-    * create refresh-jwt token
-    *
+    * create refresh-jwt token.
+    * 여기서 생성하고 User 엔티티에 집어넣는다.
     * @param userId return created refresh-jwt token
     */
    public String generateRefreshToken(UUID userId) {

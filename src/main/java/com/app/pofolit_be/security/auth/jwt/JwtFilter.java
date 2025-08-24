@@ -68,7 +68,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
    /**
     * DB 조회 없이 토큰의 Claim만으로 UserPrincipal 객체를 생성한다.
-    *
     * @param token 유효성이 검증된 JWT
     * @return UserPrincipal 객체
     */
@@ -108,6 +107,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
       // 공개 경로들은 JWT 필터 건너뜀
       return path.startsWith("/oauth2/") ||
+              path.startsWith("/api/v1/auth") ||
               path.startsWith("/login") ||
               path.startsWith("/api/public/") ||
               path.equals("/") ||
@@ -115,3 +115,4 @@ public class JwtFilter extends OncePerRequestFilter {
               path.startsWith("/v3/api-docs");
    }
 }
+

@@ -8,7 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,8 +32,6 @@ public class UserPrincipal implements OidcUser, UserDetails {
       this.attributes = attributes;
    }
 
-   // ===== 쓰는거 for Oauth2 signature
-
    @Override
    public String getName() {
       return user.getProviderId();
@@ -52,7 +49,7 @@ public class UserPrincipal implements OidcUser, UserDetails {
 
    @Override
    public Collection<? extends GrantedAuthority> getAuthorities() {
-      if (user != null && user.getRole() != null) {
+      if(user != null && user.getRole() != null) {
          return Collections.singleton(new SimpleGrantedAuthority(user.getRole().getKey()));
       }
       return Collections.emptyList();

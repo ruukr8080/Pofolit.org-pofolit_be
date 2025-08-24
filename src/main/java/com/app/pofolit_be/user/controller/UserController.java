@@ -16,8 +16,9 @@ public class UserController {
 
    private final UserService userService;
 
-   /*
-    * current user's detail info  */
+   /**
+    * current user's detail info
+    * */
    @GetMapping("/me")
    public ResponseEntity<UserResponseDto> getUserDetails(
            @AuthenticationPrincipal UserPrincipal userPrincipal) {
@@ -25,8 +26,9 @@ public class UserController {
       return ResponseEntity.ok(userResponseDto);
    }
 
-   /*
-    * update or register after login  */
+   /**
+    * update or register after login
+    * */
    @PatchMapping("/signup")
    public ResponseEntity<Void> signup(
            @AuthenticationPrincipal UserPrincipal userPrincipal,

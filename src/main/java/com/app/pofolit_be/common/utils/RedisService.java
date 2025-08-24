@@ -1,12 +1,15 @@
 package com.app.pofolit_be.common.utils;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
+/*
+* 세션 데이터 레디스
+* pup sub
+* */
 @Service
 public class RedisService {
 
