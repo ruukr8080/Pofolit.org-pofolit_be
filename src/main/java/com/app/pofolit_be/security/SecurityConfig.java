@@ -44,6 +44,7 @@ public class SecurityConfig {
            "/v3/**",
            "/login/**",
            "/api/auth/**",
+
 //           "/api/v1/users/**"
 //            만료된 토큰 처리 -> JwtFilter가 인증 실패 처리(인증 객체 생성 안 함) ->
 //            SecurityConfig가 permitAll()이라 요청 통과 ->
