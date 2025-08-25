@@ -1,5 +1,6 @@
 package com.app.pofolit_be.user.service;
 
+import com.app.pofolit_be.common.exceptions.ApiResponse;
 import com.app.pofolit_be.user.dto.SignDto;
 import com.app.pofolit_be.user.dto.SignupRequest;
 import com.app.pofolit_be.user.dto.UserResponseDto;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 /**
  *
- * */
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -61,21 +62,20 @@ public class UserService {
       log.info("\nJOIN : \n  ID [{}] \n  EMAIL [{}] \n  nick [{}] \n  프사[{}]\n  ROLE [{}]\n \n  Birth [{}] \n  직업 [{}] \n  분야 [{}]  관심사 목록 [{}]\n 토큰 : '{}'",
               user.getId(), user.getEmail(), user.getNickname(), StringUtils.hasText(user.getProfileImageUrl()) ? "no image" : "O",
               user.getBirthDay(), user.getJob(), user.getDomain(), user.getInterests(),
-              user.getRole().getKey(), !StringUtils.hasText(user.getRefreshToken()) ? "없음":"있음");
+              user.getRole().getKey(), !StringUtils.hasText(user.getRefreshToken()) ? "없음" : "있음");
    }
 
    @Transactional
    public UserResponseDto getUserInfo(UUID userid) {
       User user = userRepository.findById(userid)
-              .map(u -> {
-                 u.getEmail();
-                 u.getNickname();
-                 u.getProfileImageUrl();
-                 log.info("response! [{}] [{}]", u.getEmail(), u.getNickname());
-                 return u;
-              })
-              .orElseThrow(() -> new IllegalArgumentException("userid 없음"));
+              .orElseThrow(()-> new IllegalArgumentException("NO userid"));
       log.info("response! [{}] [{}]", user.getEmail(), user.getNickname());
       return UserResponseDto.from(user);
    }
 }
+//nickname: decodedPayload.nickname,
+//profileImageUrl: decodedPayload.profileImageUrl,
+//birthDay: decodedPayload.birthDay,
+//domain: decodedPayload.domain,
+//job: decodedPayload.job,
+//interests: decodedPayload.interests,

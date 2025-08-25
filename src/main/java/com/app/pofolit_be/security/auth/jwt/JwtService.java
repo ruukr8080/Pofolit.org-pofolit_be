@@ -28,12 +28,13 @@ public class JwtService {
    @Transactional
    public String issueTokensAndSave(User user) {
       // 1. 액세스 토큰 생성
-      String accessToken = jwtUtil.generateAccessToken(
-              user.getId(),
-              user.getEmail(),
-              user.getNickname(),
-              user.getProfileImageUrl(),
-              user.getRole().getKey());
+      String accessToken = jwtUtil.generateAccessToken(user);
+//      String accessToken = jwtUtil.generateAccessToken(
+//              user.getId(),
+//              user.getEmail(),
+//              user.getNickname(),
+//              user.getProfileImageUrl(),
+//              user.getRole().getKey());
       // 2. 리프레시 토큰 생성 및 DB 저장
       String refreshToken = jwtUtil.generateRefreshToken(user.getId());
       user.updateRefreshToken(refreshToken);
@@ -44,7 +45,7 @@ public class JwtService {
    /**
     * 리프레시토큰으로 새로운 액세스 토큰 재발급.
     *
-    * @param refreshToken 클라에서 새로 온 리프레시토큰
+    * @param refreshToken
     * @return new accessToken
     */
    @Transactional
@@ -62,7 +63,8 @@ public class JwtService {
          // 해당 유저의 ref토큰을 DB에서 삭제하고 강제 로그아웃 시키는게 국룰
          throw new IllegalArgumentException("Refresh Token Mismatch");
       }
-      String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname(), user.getProfileImageUrl(), user.getRole().getKey());
+//      String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname(), user.getProfileImageUrl(), user.getRole().getKey());
+      String newAccessToken = jwtUtil.generateAccessToken(user);
       String newRefreshToken = jwtUtil.generateRefreshToken(user.getId());
       user.updateRefreshToken(newRefreshToken);
       userRepository.save(user);
