@@ -38,7 +38,6 @@ public class JwtUtil {
 
    /**
     * create access-jwt token 최초 한 번만 생성.
-    *
     * @param user userData
     * @return jwt token
     */

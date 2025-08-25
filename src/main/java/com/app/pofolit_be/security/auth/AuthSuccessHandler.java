@@ -62,8 +62,8 @@ public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     * @return 리다이렉트 URL
     */
    private String buildRedirectUrl(Role role, String jwtToken) {
-      String targetUri = Role.GUEST.equals(role) ? signupUri+ "/auth/callback" : baseUri+ "/auth/callback";
-      return UriComponentsBuilder.fromUriString((targetUri))
+      String targetUri = Role.GUEST.equals(role) ? signupUri : baseUri;
+      return UriComponentsBuilder.fromUriString((targetUri) + "/auth/callback")
               .queryParam("token", jwtToken)
               .build()
               .toUriString();
