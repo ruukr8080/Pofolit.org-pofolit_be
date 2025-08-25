@@ -34,10 +34,9 @@ public class JwtFilter extends OncePerRequestFilter {
    protected void doFilterInternal(HttpServletRequest request,
                                    HttpServletResponse response,
                                    FilterChain filterChain) throws ServletException, IOException {
-
       try {
-         // 1. JWT 토큰 추출
          String token = getJwtFromRequest(request);
+         log.info("뽑은 토큰{}\n EXP {}",token,request.getHeader("META"));
          // 2. 토큰 유효성 검증
          if(StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
             // 3. 토큰에서 사용자 정보 추출 (DB 조회 X)

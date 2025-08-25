@@ -1,5 +1,6 @@
 package com.app.pofolit_be.security.auth.jwt;
 
+import com.app.pofolit_be.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -36,22 +37,17 @@ public class JwtUtil {
    }
 
    /**
-    * create access-jwt token
-    *
-    * @param userId uuid
-    * @param email email
-    * @param nickname nickname
-    * @param profileImageUrl profileImageUrl
-    * @param role role
+    * create access-jwt token 최초 한 번만 생성.
+    * @param user userData
     * @return jwt token
     */
-   public String generateAccessToken(UUID userId, String email, String nickname,String profileImageUrl, String role) {
+   public String generateAccessToken(User user) {
       Map<String, Object> claims = new HashMap<>();
-      claims.put("email", email);
-      claims.put("nickname", nickname);
-      claims.put("profileImageUrl", profileImageUrl);
-      claims.put("role", role);
-      return createToken(claims, userId.toString(), accessExp);
+      claims.put("email", user.getEmail());
+      claims.put("nickname", user.getNickname());
+      claims.put("profileImageUrl", user.getProfileImageUrl());
+      claims.put("role", user.getRole().getKey());
+      return createToken(claims, user.getId().toString(), accessExp);
    }
 
    /**
@@ -71,10 +67,10 @@ public class JwtUtil {
       Date expiryDate = new Date(now.getTime() + EXP);
 
       return Jwts.builder()
-              .setClaims(claims)
-              .setSubject(subject)
-              .setIssuedAt(now)
-              .setExpiration(expiryDate)
+              .claims(claims)
+              .subject(subject)
+              .issuedAt(now)
+              .expiration(expiryDate)
               .signWith(key)
               .compact();
    }
