@@ -6,7 +6,7 @@ server:
   port: 8080
 logging:
   level:
-    root: INFO
+    root: WARN
     org.hibernate.orm: INFO
 spring:
   profiles:
@@ -44,7 +44,7 @@ spring:
     clean-disabled: false
   jwt:
     secret: ${JWT_SECRET:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
-    expiration: ${JWT_EXP:300}
+    expiration: ${JWT_EXP:3600}
   security:
     oauth2:
       client:
