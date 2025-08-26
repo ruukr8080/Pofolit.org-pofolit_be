@@ -33,7 +33,7 @@ public class JwtUtil {
                   @Value("${JWT_EXP}") long refreshExp) {
       this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
       this.accessExp = accessExp * 1000;
-      this.refreshExp = (refreshExp+3000) * 1000;
+      this.refreshExp = (refreshExp + 3000) * 1000;
    }
 
    /**
@@ -54,6 +54,7 @@ public class JwtUtil {
    /**
     * create refresh-jwt token.
     * 여기서 생성하고 User 엔티티에 집어넣는다.
+    *
     * @param userId return created refresh-jwt token
     */
    public String generateRefreshToken(UUID userId) {

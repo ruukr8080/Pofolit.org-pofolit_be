@@ -36,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
                                    FilterChain filterChain) throws ServletException, IOException {
       try {
          String token = getJwtFromRequest(request);
-         log.info("req on Jwt filter | Token {}\n EXP {}",!StringUtils.hasText(token)?"없음":"있음","ㅇㄴㅁ" );
+         log.info("req on Jwt filter | Token {}\n", !StringUtils.hasText(token) ? "없음" : "있음");
          // 2. 토큰 유효성 검증
          if(StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
             // 3. 토큰에서 사용자 정보 추출 (DB 조회 X)
@@ -67,6 +67,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
    /**
     * DB 조회 없이 토큰의 Claim만으로 UserPrincipal 객체를 생성한다.
+    *
     * @param token 유효성이 검증된 JWT
     * @return UserPrincipal 객체
     */
