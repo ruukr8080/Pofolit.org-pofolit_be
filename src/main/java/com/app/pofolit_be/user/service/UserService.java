@@ -1,6 +1,5 @@
 package com.app.pofolit_be.user.service;
 
-import com.app.pofolit_be.common.exceptions.ApiResponse;
 import com.app.pofolit_be.user.dto.SignDto;
 import com.app.pofolit_be.user.dto.SignupRequest;
 import com.app.pofolit_be.user.dto.UserResponseDto;
@@ -68,14 +67,8 @@ public class UserService {
    @Transactional
    public UserResponseDto getUserInfo(UUID userid) {
       User user = userRepository.findById(userid)
-              .orElseThrow(()-> new IllegalArgumentException("NO userid"));
+              .orElseThrow(() -> new IllegalArgumentException("NO userid"));
       log.info("response! [{}] [{}]", user.getEmail(), user.getNickname());
       return UserResponseDto.from(user);
    }
 }
-//nickname: decodedPayload.nickname,
-//profileImageUrl: decodedPayload.profileImageUrl,
-//birthDay: decodedPayload.birthDay,
-//domain: decodedPayload.domain,
-//job: decodedPayload.job,
-//interests: decodedPayload.interests,
