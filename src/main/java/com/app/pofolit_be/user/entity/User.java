@@ -1,16 +1,25 @@
 package com.app.pofolit_be.user.entity;
 
+import com.app.pofolit_be.user.dto.SignupRequest;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@Entity(name = "users")
+@Table(name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_user_provider",
+                        columnNames = {"registration_id", "provider_id"}
+                )
+        })
+@Entity
 public class User {
 
    @Id
@@ -22,19 +31,52 @@ public class User {
    @Column(unique = true)
    private String email;
    private String nickname;
-   private String profileImageUrl;
+   @Column(name = "profile_image_url", length = 355)
+   private String profileImageUrl; // 카카오:110px*110px
 
    private String providerId;
    private String registrationId;
-
-   private String refreshToken;
+   private LocalDate birthDay;
+   private String job;
+   private String domain;
+   @ElementCollection(fetch = FetchType.LAZY)
+   @CollectionTable(name = "user_interests", joinColumns = @JoinColumn(name = "user_id"))
+   @Column(name = "interests_id")
+   private List<String> interests;
 
    @Enumerated(EnumType.STRING)
    private Role role;
 
-   public User update(String nickname, String profileImageUrl) {
+   private String refreshToken;
+
+   @Builder
+   public User(UUID id, String email, String nickname, String profileImageUrl, String providerId, String registrationId, Role role) {
+      this.id = id;
+      this.email = email;
       this.nickname = nickname;
       this.profileImageUrl = profileImageUrl;
-      return this;
+      this.providerId = providerId;
+      this.registrationId = registrationId;
+      this.role = role;
+   }
+
+   public void updateSocialProfile(String nickname, String profileImageUrl) {
+      this.nickname = nickname;
+      this.profileImageUrl = profileImageUrl;
+      //      return this;
+   }
+
+   // 리프레시 토큰 생성하ㅏㄹ때 파라미터 : new HashMap<>(), userId.toString(), refreshExp
+   public void updateRefreshToken(String refreshToken) {
+      this.refreshToken = refreshToken;
+   }
+
+   public void signup(SignupRequest request) {
+      this.nickname = request.nickname();
+      this.birthDay = request.birthDay();
+      this.domain = request.domain();
+      this.job = request.job();
+      this.interests = request.interests();
+      this.role = Role.USER;
    }
 }

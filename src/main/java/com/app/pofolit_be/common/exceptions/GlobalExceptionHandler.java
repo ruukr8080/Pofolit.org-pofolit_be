@@ -1,6 +1,7 @@
 package com.app.pofolit_be.common.exceptions;
 
 import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,13 +12,17 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JWT, OAuth2, business 로직 관련 exception 일관된 형태로 처리함
+ * JWT, OAuth2, business exception
  */
 @Slf4j
 @RestControllerAdvice
@@ -59,9 +64,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
-    /**
-     * 인증 실패 예외 처리
-     */
+
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
         log.warn("인증 실패: {}", ex.getMessage());
@@ -143,7 +147,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("예상치 못한 예외 발생: {}", ex.getMessage(), ex);
-        
+
         ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
@@ -151,7 +155,7 @@ public class GlobalExceptionHandler {
                 .message("예상치 못한 오류가 발생했습니다")
                 .path(getPath(request))
                 .build();
-                
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
