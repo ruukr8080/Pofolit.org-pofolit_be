@@ -36,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
                                    FilterChain filterChain) throws ServletException, IOException {
       try {
          String token = getJwtFromRequest(request);
-         log.info("뽑은 토큰{}\n EXP {}",token,request.getHeader("META"));
+         log.info("req on Jwt filter | Token {}\n EXP {}",!StringUtils.hasText(token)?"없음":"있음","ㅇㄴㅁ" );
          // 2. 토큰 유효성 검증
          if(StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
             // 3. 토큰에서 사용자 정보 추출 (DB 조회 X)

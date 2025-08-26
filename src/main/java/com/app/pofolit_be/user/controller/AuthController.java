@@ -1,6 +1,8 @@
 package com.app.pofolit_be.user.controller;
 
 import com.app.pofolit_be.security.auth.jwt.JwtService;
+import com.app.pofolit_be.user.entity.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +25,9 @@ public class AuthController {
     * 리프레시 토큰을 사용하여 액세스 토큰을 재발급하는 API입니다.
     */
    @PostMapping("/token/refresh")
-   public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> requestBody) {
+   public ResponseEntity<?> refreshAccessToken(@Valid @RequestBody Map<String, String> requestBody
+
+   ) {
       String refreshToken = requestBody.get("refreshToken");
       if(refreshToken == null) {
          log.error("유효하지 않거나 만료 된 리프레시 토큰입니다.");
