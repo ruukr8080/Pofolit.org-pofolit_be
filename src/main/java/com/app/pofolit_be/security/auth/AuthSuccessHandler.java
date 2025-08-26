@@ -1,9 +1,11 @@
 package com.app.pofolit_be.security.auth;
 
 import com.app.pofolit_be.security.auth.jwt.JwtService;
+import com.app.pofolit_be.security.auth.jwt.JwtUtil;
 import com.app.pofolit_be.user.dto.UserPrincipal;
 import com.app.pofolit_be.user.entity.Role;
 import com.app.pofolit_be.user.entity.User;
+import com.app.pofolit_be.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -62,8 +64,8 @@ public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     * @return 리다이렉트 URL
     */
    private String buildRedirectUrl(Role role, String jwtToken) {
-      String targetUri = Role.GUEST.equals(role) ? signupUri : baseUri;
-      return UriComponentsBuilder.fromUriString((targetUri) + "/auth/callback")
+      String targetUri = Role.GUEST.equals(role) ? signupUri+ "/auth/callback" : baseUri+ "/auth/callback";
+      return UriComponentsBuilder.fromUriString((targetUri))
               .queryParam("token", jwtToken)
               .build()
               .toUriString();
@@ -71,7 +73,6 @@ public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
    /**
     * 인증 실패 시 에러 페이지로 리다이렉트
-    *
     * @param response HttpServletResponse
     * @param errorCode 에러 코드
     * @param errorMessage 에러 메시지
