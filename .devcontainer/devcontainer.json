@@ -1,0 +1,39 @@
+{
+  "name": "pofolit-be",
+
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+
+  "service": "pofolit-be",
+
+  "workspaceFolder": "/app-api",
+
+  "postCreateCommand": "gradle wrapper",
+
+  "forwardPorts": [
+    8080,
+    3306,
+    6379
+  ],
+
+  // intelliJ 플러그인
+//  "extensions": [],
+//
+//  // VS Code 설정
+//  "settings": {},
+
+  // 컨테이너 실행 중 사용자 설정 파일을 컨테이너 내부로 복사할 수 있게함.
+  "mounts": [
+    "source=${localWorkspaceFolder}/.gradle,target=/root/.gradle,type=bind"
+  ],
+
+  // 추가적인 컨테이너 구성
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // VS Code 설정이 필요할 떄 추가하는 공간
+      }
+    }
+  }
+}
