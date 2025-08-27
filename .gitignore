@@ -1,3 +1,4 @@
+./gradlew
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -7,8 +8,7 @@ wrapper/
 ### test ###
 **/src/test/**
 
-### mcp ###
-.junie
+
 
 ### Secrets ###
 .env
