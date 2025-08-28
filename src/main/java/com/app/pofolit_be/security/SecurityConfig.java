@@ -3,7 +3,7 @@ package com.app.pofolit_be.security;
 import com.app.pofolit_be.common.exceptions.ApiResponse;
 import com.app.pofolit_be.security.auth.AuthSuccessHandler;
 import com.app.pofolit_be.security.auth.SignService;
-import com.app.pofolit_be.security.auth.jwt.JwtFilter;
+import com.app.pofolit_be.security.auth.jwt.TokenFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
@@ -38,22 +38,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+   private final TokenFilter tokenFilter;
+   private final SignService oAuth2UserService;
+   private final AuthSuccessHandler authSuccessHandler;
+
    private static final String[] PERMIT_URLS = {
            "/favicon.ico",
+           "/health",
            "/swagger-ui/**",
            "/v3/**",
            "/login/**",
            "/api/auth/**",
-//           "/api/v1/users/**"
-//            만료된 토큰 처리 -> JwtFilter가 인증 실패 처리(인증 객체 생성 안 함) ->
-//            SecurityConfig가 permitAll()이라 요청 통과 ->
-//            Controller에서 @AuthenticationPrincipal이 null ->
-//            NullPointerException.
-   };
 
-   private final JwtFilter jwtFilter;
-   private final SignService oAuth2UserService;
-   private final AuthSuccessHandler authSuccessHandler;
+   };
 
    @Bean
    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -67,11 +64,11 @@ public class SecurityConfig {
                       .authenticationEntryPoint(authEntryPoint()))
               .authorizeHttpRequests(auth -> auth
                       .requestMatchers(PERMIT_URLS).permitAll()
-                      .requestMatchers("/api/v1/users/me").hasAnyRole("GUEST","USER")
+                      .requestMatchers("/api/v1/users/**").hasAnyRole("GUEST","USER")
                       .anyRequest().authenticated())
               .sessionManagement(session -> session
                       .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-              .addFilterBefore(jwtFilter,
+              .addFilterBefore(tokenFilter,
                       UsernamePasswordAuthenticationFilter.class)
               .oauth2Login(oauth2 -> oauth2
                       .successHandler(authSuccessHandler)

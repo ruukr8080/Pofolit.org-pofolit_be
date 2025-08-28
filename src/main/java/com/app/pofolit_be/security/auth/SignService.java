@@ -1,7 +1,6 @@
 package com.app.pofolit_be.security.auth;
 
 import com.app.pofolit_be.user.dto.SignDto;
-import com.app.pofolit_be.user.dto.UserPrincipal;
 import com.app.pofolit_be.user.mapper.OAuth2AttributeMapper;
 import com.app.pofolit_be.user.service.UserService;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.app.pofolit_be.user.dto;
+package com.app.pofolit_be.security.auth;
 
 import com.app.pofolit_be.user.entity.User;
 import lombok.Getter;

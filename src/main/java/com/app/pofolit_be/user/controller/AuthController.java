@@ -1,13 +1,13 @@
 package com.app.pofolit_be.user.controller;
 
-import com.app.pofolit_be.security.auth.jwt.JwtService;
-import com.app.pofolit_be.user.entity.User;
-import jakarta.validation.Valid;
+import com.app.pofolit_be.security.auth.CookieUtil;
+import com.app.pofolit_be.security.auth.jwt.TokenService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,21 +19,28 @@ import java.util.Map;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-   private final JwtService jwtService;
+   private final TokenService tokenService;
 
-   /**
-    * 리프레시 토큰을 사용하여 액세스 토큰을 재발급하는 API입니다.
-    */
    @PostMapping("/token/refresh")
-   public ResponseEntity<?> refreshAccessToken(@Valid @RequestBody Map<String, String> requestBody
-
-   ) {
-      String refreshToken = requestBody.get("refreshToken");
+   public ResponseEntity<Void> refreshTokens(
+           @CookieValue(value = "refreshToken", required = false) String refreshToken,
+           HttpServletResponse response) {
       if(refreshToken == null) {
-         log.error("유효하지 않거나 만료 된 리프레시 토큰입니다.");
-         return ResponseEntity.status(401).body(Map.of("message", "Invalid Refresh Token"));
+         return ResponseEntity.status(401).build();
       }
-      String newAccessToken = jwtService.refreshAccessToken(refreshToken);
-      return ResponseEntity.ok(Map.of("token", newAccessToken));
+      try {
+         Map<String, String> newTokens = tokenService.reIssueToken(refreshToken);
+         String newAccessToken = newTokens.get("accessToken");
+         String newRefreshToken = newTokens.get("refreshToken");
+         CookieUtil.addTokensToCookie(response, newAccessToken, newRefreshToken);
+         tokenService.ResponseTokenByCookie(response, newTokens.get("accessToken"));
+
+         return ResponseEntity.ok().build();
+      } catch (IllegalArgumentException e) {
+         CookieUtil.expireCookie(response, "accessToken");
+         CookieUtil.expireCookie(response, "refreshToken");
+
+         return ResponseEntity.status(401).build();
+      }
    }
 }

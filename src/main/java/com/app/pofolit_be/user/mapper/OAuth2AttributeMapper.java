@@ -4,9 +4,6 @@ import com.app.pofolit_be.user.dto.SignDto;
 import org.springframework.stereotype.Component;
 import java.util.Map;
 
-/**
- * OAuth2 제공자별 사용자 정보 필드를 통일된 형식으로 매핑하는 유틸리티 클래스입니다.
- */
 @Component
 public class OAuth2AttributeMapper {
 
@@ -19,6 +16,7 @@ public class OAuth2AttributeMapper {
    public SignDto getOAuth2UserDto(String registrationId, Map<String, Object> attributes) {
       String email, nickname, profileImageUrl;
       String providerId = String.valueOf(attributes.get("sub"));
+      String refreshToken = String.valueOf(attributes.get("sub"));
 
       switch (registrationId) {
          case "google":
@@ -37,6 +35,6 @@ public class OAuth2AttributeMapper {
             throw new IllegalArgumentException("Unsupported registrationId: " + registrationId);
       }
 
-      return new SignDto(email, nickname, profileImageUrl, registrationId, providerId);
+      return new SignDto(email, nickname, profileImageUrl, registrationId, refreshToken,providerId);
    }
 }

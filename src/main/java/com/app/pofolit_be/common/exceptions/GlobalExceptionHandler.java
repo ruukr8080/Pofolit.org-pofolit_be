@@ -1,6 +1,8 @@
 package com.app.pofolit_be.common.exceptions;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -9,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -45,6 +48,7 @@ public class GlobalExceptionHandler {
                 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
+
 
     /**
      * OAuth2 인증 예외 처리
@@ -122,6 +126,47 @@ public class GlobalExceptionHandler {
                 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
+
+    /**
+     * @PathVariable 타입 불일치 예외 처리.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, WebRequest request) {
+        log.warn("파라미터 타입 불일치: {}", ex.getMessage());
+
+        String message = String.format("['%s'] 잘못된 파라미터. 필요한 타입 ['%s']. 들어온 값은 ['%s']",
+                ex.getName(), ex.getRequiredType().getSimpleName(), ex.getValue());
+
+        ApiResponse error = ApiResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("BAD_REQUEST")
+                .message(message)
+                .path(getPath(request))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * 우리가 만든 비즈니스 예외 처리. ㅇㅋ?
+     * CustomException 던지면 여기서 다 잡아서 이쁜 JSON으로 내려줌.
+     */
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ApiResponse> handleCustomException(CustomException ex, WebRequest request) {
+        log.warn("비즈니스 예외 발생: [{}], {}", ex.getErrorCode(), ex.getMessage());
+
+        ApiResponse error = ApiResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(ex.getStatus().value())
+                .error(ex.getErrorCode())
+                .message(ex.getMessage())
+                .path(getPath(request))
+                .build();
+
+        return new ResponseEntity<>(error, ex.getStatus());
+    }
+
 
     /**
      * 일반적인 RuntimeException 처리

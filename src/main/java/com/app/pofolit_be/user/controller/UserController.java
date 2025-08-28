@@ -1,30 +1,32 @@
 package com.app.pofolit_be.user.controller;
 
+import com.app.pofolit_be.security.auth.UserPrincipal;
 import com.app.pofolit_be.user.dto.SignupRequest;
-import com.app.pofolit_be.user.dto.UserPrincipal;
 import com.app.pofolit_be.user.dto.UserResponseDto;
 import com.app.pofolit_be.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
+@Slf4j
 public class UserController {
 
    private final UserService userService;
 
-   /**
-    * current user's detail info
-    * @params nickname,profileImageUrl,birthDay,domain,job,interests,
-    */
    @GetMapping("/me")
-   public ResponseEntity<UserResponseDto> getUserDetails(
+   public ResponseEntity<?> getUserDetails(
            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-      UserResponseDto userResponseDto = userService.getUserInfo(userPrincipal.getUser().getId());
-      return  ResponseEntity.ok(userResponseDto);
+
+      UUID myId = userPrincipal.getUser().getId();
+      UserResponseDto userResponseDto = userService.getUserInfo(myId);
+      return ResponseEntity.ok(userResponseDto);
    }
 
    /**

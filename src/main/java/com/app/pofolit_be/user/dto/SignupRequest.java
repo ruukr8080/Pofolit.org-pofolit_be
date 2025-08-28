@@ -15,8 +15,7 @@ public record SignupRequest(
         @JsonProperty("profileImageUrl")
         String profileImageUrl,
         String domain,
-        String job,
-        List<String> interests
+        String job
 )
 {
 }
