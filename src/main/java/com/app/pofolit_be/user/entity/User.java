@@ -55,9 +55,10 @@ public class User {
       this.role = role;
    }
 
-   public void updateSocialProfile(String nickname, String profileImageUrl) {
+   public void updateUser(String nickname, String profileImageUrl, String refreshToken) {
       this.nickname = nickname;
       this.profileImageUrl = profileImageUrl;
+      this.refreshToken = refreshToken;
    }
 
    public void updateRefreshToken(String token) {

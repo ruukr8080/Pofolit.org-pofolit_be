@@ -35,6 +35,6 @@ public class OAuth2AttributeMapper {
             throw new IllegalArgumentException("Unsupported registrationId: " + registrationId);
       }
 
-      return new SignDto(email, nickname, profileImageUrl, registrationId, refreshToken,providerId);
+      return new SignDto(email, nickname, profileImageUrl, registrationId, refreshToken, providerId);
    }
 }

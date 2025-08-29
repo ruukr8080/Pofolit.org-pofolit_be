@@ -45,11 +45,12 @@ public class TokenFilter extends OncePerRequestFilter {
       }
       filterChain.doFilter(request, response);
    }
+
    @Override
    protected boolean shouldNotFilter(HttpServletRequest request) {
       String path = request.getRequestURI();
       return path.startsWith("/oauth2/") ||
-              path.startsWith("/api/v1/auth") || // 로그인, 토큰 재발급 등
+              path.startsWith("/api/v1/auth") ||
               path.startsWith("/login") ||
               path.startsWith("/api/public/") ||
               path.equals("/") ||

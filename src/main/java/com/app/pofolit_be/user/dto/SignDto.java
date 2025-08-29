@@ -5,8 +5,8 @@ public record SignDto(
         String nickname,
         String profileImageUrl,
         String registrationId,
-        String refreshToken,
-        String providerId
+        String providerId,
+        String refreshToken
 )
 {
 }

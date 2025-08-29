@@ -20,8 +20,7 @@ public record UserResponseDto(
 )
 {
    public static UserResponseDto from(User user) {
-      return new UserResponseDto(user.getEmail(),user.getNickname(), user.getProfileImageUrl(), user.getBirthDay(), user.getDomain(), user.getJob())
-              ;
+      return new UserResponseDto(user.getEmail(),user.getNickname(), user.getProfileImageUrl(), user.getBirthDay(), user.getDomain(), user.getJob());
    }
 }
 
