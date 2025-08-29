@@ -1,32 +1,25 @@
-version: '3.8'
 services:
   pofolit-be:
-    build:
-      context: .
+    container_name: pofolit_be
+    restart: always
+    build: .
+#    image: ruukr8080/pofolit:1.0.0 # docker build -t ruukr8080/pofolit:1.0.0 . docker pull ruukr8080/pofolit:1.0.0
     ports:
       - "8080:8080"
     depends_on:
       - mysql
       - redis
     env_file:
-      - ./src/main/resources/.env
-    environment:
-      - DB_URL=jdbc:mysql://mysql:3306/pofolitdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-      - DB_USERNAME=root
-      - DB_PASSWORD=sa
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - ./.env
   mysql:
-    image: mysql:8.0
-    container_name: pofolit-mysql
+    image: 'mysql:latest'
+    container_name: pofolit_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 'sa'
-      MYSQL_USER: 'mysql'
-      MYSQL_PASSWORD: 'sa'
-      MYSQL_DATABASE: pofolitdb
+      - 'MYSQL_ROOT_PASSWORD=verysecret'
+      - 'MYSQL_DATABASE=pofolitdb'
     ports:
-      - "3300:3306"
+      - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
   redis:
@@ -34,7 +27,6 @@ services:
     container_name: pofolit-redis
     restart: always
     ports:
-      - "6370:6379"
-
+      - "6379:6379"
 volumes:
   mysql-data:

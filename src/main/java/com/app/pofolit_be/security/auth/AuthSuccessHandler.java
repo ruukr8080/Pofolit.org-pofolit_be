@@ -45,7 +45,7 @@ public class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
                  user.getRole(), user.getId(), user.getEmail(), user.getNickname(), StringUtils.hasText(user.getProfileImageUrl()) ? "있음" : "없음", user.getProviderId(), user.getRegistrationId(), "ACCESS/REFRESH");
       } catch (Exception e) {
          log.error("OAuth2 인증 처리 중 예외 발생: {}", e.getMessage(), e);
-         handleAuthenticationError(request, response, "auth_redirect", "인증 처리 중 서버 오류가 발생했습니다.");
+         handleAuthenticationError(request, response, "authRedirect", "인증 처리 중 서버 오류가 발생했습니다.");
       }
    }
 

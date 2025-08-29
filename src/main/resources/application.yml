@@ -11,8 +11,6 @@ logging:
 spring:
   config:
     import: optional:file:.env[.properties]
-  profiles:
-    active: dev
   data:
     redis:
       host: ${REDIS_HOST:127.0.0.1}
@@ -31,7 +29,8 @@ spring:
     password: ${DB_PASSWORD:sa}
   jwt:
     secret: ${JWT_SECRET:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
-    expiration: ${JWT_EXP:36000}
+    access-exp: ${JWT_EXP:36000}
+    refresh-exp: ${REFRESH_JWT_EXP:60480}
   security:
     oauth2:
       client:
@@ -57,9 +56,7 @@ spring:
             client-name: Kakao
         provider:
           kakao:
-            # OIDC 표준
             issuer-uri: https://kauth.kakao.com
-
 ---
 spring:
   config:
@@ -77,17 +74,3 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     clean-disabled: true
----
-spring:
-  config:
-    activate:
-      on-profile: "test"
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        format_sql: true
-    open-in-view: false
-  flyway:
-    enabled: false
