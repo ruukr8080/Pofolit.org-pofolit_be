@@ -9,6 +9,8 @@ logging:
     root: INFO
     org.hibernate.orm: INFO
 spring:
+  config:
+    import: optional:file:.env[.properties]
   profiles:
     active: dev
   data:
