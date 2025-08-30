@@ -8,9 +8,9 @@ import java.util.Map;
 public class OAuth2AttributeMapper {
 
    /**
-    * 등록 ID와 속성을 기반으로 OAuth2UserDto를 생성합니다.
-    * @param registrationId OAuth2 제공자 등록 ID (예: "google", "kakao")
-    * @param attributes 사용자 정보 속성 맵
+    * 제공사명(registrationId)과 사용자 정보(attributes)을 기반으로 OAuth2UserDto를 생성합니다.
+    * @param registrationId OAuth2.0 api 제공사 ID ("google", "kakao")
+    * @param attributes 사용자 정보
     * @return 통일된 OAuth2UserDto 객체
     */
    public SignDto getOAuth2UserDto(String registrationId, Map<String, Object> attributes) {

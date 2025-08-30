@@ -1,9 +1,6 @@
-package com.app.pofolit_be.common.exceptions;
+package com.app.pofolit_be.common.exception;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,21 +8,17 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JWT, OAuth2, business exception
+ * 인증, 사용자 비지니스로직 관련 예외 핸들러입니다.
  */
 @Slf4j
 @RestControllerAdvice
@@ -37,7 +30,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<ApiResponse> handleJwtException(JwtException ex, WebRequest request) {
         log.warn("JWT 예외 발생: {}", ex.getMessage());
-        
+
         ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
@@ -45,10 +38,9 @@ public class GlobalExceptionHandler {
                 .message("JWT 토큰이 유효하지 않습니다")
                 .path(getPath(request))
                 .build();
-                
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
-
 
     /**
      * OAuth2 인증 예외 처리
@@ -56,7 +48,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OAuth2AuthenticationException.class)
     public ResponseEntity<ApiResponse> handleOAuth2Exception(OAuth2AuthenticationException ex, WebRequest request) {
         log.warn("OAuth2 인증 예외 발생: {}", ex.getMessage());
-        
+
         ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
@@ -64,16 +56,14 @@ public class GlobalExceptionHandler {
                 .message("소셜 로그인 처리 중 오류가 발생했습니다")
                 .path(getPath(request))
                 .build();
-                
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
-
-
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
         log.warn("인증 실패: {}", ex.getMessage());
-        
+
         ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
@@ -81,7 +71,7 @@ public class GlobalExceptionHandler {
                 .message("인증에 실패했습니다")
                 .path(getPath(request))
                 .build();
-                
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
@@ -91,7 +81,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
         log.warn("접근 권한 없음: {}", ex.getMessage());
-        
+
         ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.FORBIDDEN.value())
@@ -99,7 +89,7 @@ public class GlobalExceptionHandler {
                 .message("접근 권한이 없습니다")
                 .path(getPath(request))
                 .build();
-                
+
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
@@ -109,12 +99,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleValidationExceptions(MethodArgumentNotValidException ex, WebRequest request) {
         log.warn("검증 오류: {}", ex.getMessage());
-        
+
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error -> 
-            errors.put(error.getField(), error.getDefaultMessage())
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
         );
-        
+
         ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -123,7 +113,7 @@ public class GlobalExceptionHandler {
                 .path(getPath(request))
                 .details(errors)
                 .build();
-                
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
@@ -167,14 +157,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, ex.getStatus());
     }
 
-
     /**
      * 일반적인 RuntimeException 처리
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
         log.error("Runtime 예외 발생: {}", ex.getMessage(), ex);
-        
+
         ApiResponse error = ApiResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
@@ -182,7 +171,7 @@ public class GlobalExceptionHandler {
                 .message("서버 내부 오류가 발생했습니다")
                 .path(getPath(request))
                 .build();
-                
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
