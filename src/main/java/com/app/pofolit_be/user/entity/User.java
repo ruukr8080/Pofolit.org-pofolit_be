@@ -1,5 +1,6 @@
 package com.app.pofolit_be.user.entity;
 
+import com.app.pofolit_be.user.dto.SignDto;
 import com.app.pofolit_be.user.dto.SignupRequest;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,28 +42,30 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    private String refreshToken;
+    private String jwtRefreshToken;
+    private String oauthRefreshToken;
 
     @Builder
-    public User(UUID id, String email, String nickname, String refreshToken, String profileImageUrl, String providerId, String registrationId, Role role) {
+    public User(UUID id, String email, String nickname, String jwtRefreshToken, String profileImageUrl, String providerId, String registrationId, Role role, String oauthRefreshToken) {
         this.id = id;
         this.email = email;
         this.nickname = nickname;
         this.profileImageUrl = profileImageUrl;
-        this.refreshToken = refreshToken;
         this.providerId = providerId;
         this.registrationId = registrationId;
         this.role = role;
+        this.oauthRefreshToken = oauthRefreshToken;
     }
 
-    public void updateUser(String nickname, String profileImageUrl, String refreshToken) {
-        this.nickname = nickname;
-        this.profileImageUrl = profileImageUrl;
-        this.refreshToken = refreshToken;
+    public void update(SignDto signDto) {
+        this.nickname = signDto.nickname();
+        this.profileImageUrl = signDto.profileImageUrl();
+        if(signDto.refreshToken() != null)
+            this.oauthRefreshToken = signDto.refreshToken();
     }
 
-    public void updateRefreshToken(String token) {
-        this.refreshToken = token;
+    public void updateRefreshToken(String jwtRefreshToken) {
+        this.jwtRefreshToken = jwtRefreshToken;
     }
 
     public void signup(SignupRequest request) {

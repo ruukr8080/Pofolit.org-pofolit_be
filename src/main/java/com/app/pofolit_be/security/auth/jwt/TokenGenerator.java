@@ -1,5 +1,6 @@
 package com.app.pofolit_be.security.auth.jwt;
 
+import com.app.pofolit_be.security.auth.properties.TokenProperties;
 import com.app.pofolit_be.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -59,7 +60,7 @@ public class TokenGenerator {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", user.getEmail());
         claims.put("nickname", user.getNickname());
-        claims.put("profileImageUrl", user.getProfileImageUrl());
+        claims.put("picture", user.getProfileImageUrl());
         claims.put("role", user.getRole().getKey());
         return createToken(claims, user.getId().toString(), tokenProperties.accessTokenExpOfSecond() * 1000);
     }
@@ -74,7 +75,7 @@ public class TokenGenerator {
      * @return Map<userId, refreshTokenExp>
      */
     public String generateRefreshToken(User user) {
-        return createToken(new HashMap<>(), user.getId().toString(), (int) tokenProperties.refreshTokenExpOfDay() * 1000 * 60 * 60 * 24);
+        return createToken(new HashMap<>(), user.getId().toString(), tokenProperties.refreshTokenExpOfDay() * 1000 * 60 * 60 * 24);
     }
 
     /**

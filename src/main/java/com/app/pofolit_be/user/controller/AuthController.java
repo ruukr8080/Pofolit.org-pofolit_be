@@ -51,9 +51,9 @@ public class AuthController {
             Map<String, String> newTokens = tokenService.reIssueToken(refreshToken);
             String newAccessToken = newTokens.get("accessToken");
             String newRefreshToken = newTokens.get("refreshToken");
+
             CookieUtil.addTokensToCookie(response, newAccessToken, newRefreshToken);
             tokenService.responseTokenByCookie(response, newTokens.get("accessToken"));
-
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             CookieUtil.expireCookie(response, "accessToken");

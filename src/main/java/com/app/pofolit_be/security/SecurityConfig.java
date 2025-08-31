@@ -2,9 +2,9 @@ package com.app.pofolit_be.security;
 
 import com.app.pofolit_be.common.exception.ApiResponse;
 import com.app.pofolit_be.security.auth.AuthSuccessHandler;
-import com.app.pofolit_be.security.auth.SignService;
 import com.app.pofolit_be.security.auth.jwt.TokenFilter;
-import com.app.pofolit_be.security.auth.jwt.TokenProperties;
+import com.app.pofolit_be.security.auth.properties.TokenProperties;
+import com.app.pofolit_be.user.service.SignService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +50,7 @@ public class SecurityConfig {
             "/v3/**"
     };
     private final TokenFilter tokenFilter;
-    private final SignService oAuth2UserService;
+    private final SignService signService;
     private final AuthSuccessHandler authSuccessHandler;
 
     @Bean
@@ -65,23 +65,23 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authEntryPoint()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PERMIT_URLS).permitAll()
-                        .requestMatchers("/api/v1/users/**").hasAnyRole("GUEST", "USER")
                         .anyRequest().authenticated())
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(tokenFilter,
-                        UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(authSuccessHandler)
                         .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(oAuth2UserService)));
+                                .oidcUserService(signService)))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(tokenFilter,
+                        UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cors = new CorsConfiguration();
-        cors.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080/health"));
+        cors.setAllowedOrigins(List.of("http://localhost:3000"));
         cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         cors.setAllowedMethods(
                 Arrays.asList(

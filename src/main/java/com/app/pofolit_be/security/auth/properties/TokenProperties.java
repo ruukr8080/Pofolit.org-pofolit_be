@@ -1,4 +1,4 @@
-package com.app.pofolit_be.security.auth.jwt;
+package com.app.pofolit_be.security.auth.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
@@ -15,7 +15,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param accessTokenExpOfSecond accessToken 만료기간 (초 단위)
  * @param refreshTokenExpOfDay refreshToken 만료기간 (일 단위)
  */
-@ConfigurationProperties(prefix = "jwt")
+@ConfigurationProperties(prefix = "spring.jwt")
 public record TokenProperties(
         String secret,
         String authorityKey,

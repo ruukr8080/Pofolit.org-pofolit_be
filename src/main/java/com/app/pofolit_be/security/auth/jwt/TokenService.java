@@ -50,10 +50,11 @@ public class TokenService {
      */
     public UserPrincipal createUserPrincipalFromToken(String token) {
         Claims claims = tokenGenerator.getAllClaimsFromToken(token);
-        User user = User.builder()
-                .id(UUID.fromString(claims.getSubject()))
-                .build();
-        return new UserPrincipal(user, claims);
+        UUID userId = UUID.fromString(claims.getSubject());
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(()-> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId)
+        );
+        return new UserPrincipal(user,claims);
     }
 
     /**
@@ -70,16 +71,15 @@ public class TokenService {
      */
     @Transactional
     public Map<String, String> issueToken(User user) {
-        log.debug("토큰 발급 요청: 사용자 ID [{}], EMAIL [{}]", user.getId(), user.getEmail());
 
-        String token = tokenGenerator.generateRefreshToken(user);
-        user.updateRefreshToken(token);
+        String accessToken = tokenGenerator.generateAccessToken(user);
+        String refreshToken = tokenGenerator.generateRefreshToken(user);
+        user.updateRefreshToken(refreshToken);
 
         Map<String, String> tokens = new HashMap<>();
-        tokens.put("accessToken", token);
-        tokens.put("refreshToken", token);
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
 
-        log.info("토큰 발급 완료: 사용자 ID [{}]", user.getId());
         return tokens;
     }
 
@@ -111,18 +111,11 @@ public class TokenService {
         User user = userRepository.findUserById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
 
-        if(!token.equals(user.getRefreshToken())) {
+        if(!token.equals(user.getJwtRefreshToken())) {
             throw new CustomException("리프레시 토큰이 일치하지 않습니다. 다시 로그인해 주세요", HttpStatus.BAD_REQUEST, "TOKEN_MISMATCH");
         }
 
-        String newAccessToken = tokenGenerator.generateAccessToken(user);
-        String newRefreshToken = tokenGenerator.generateRefreshToken(user);
-        user.updateRefreshToken(newRefreshToken);
-
-        Map<String, String> newTokens = new HashMap<>();
-        newTokens.put("accessToken", newAccessToken);
-        newTokens.put("refreshToken", newRefreshToken);
-
+        Map<String, String> newTokens = issueToken(user);
         log.info("토큰 재발급 완료: 사용자 ID [{}]", userId);
         return newTokens;
     }
@@ -140,21 +133,32 @@ public class TokenService {
      * @return 추출된 refreshToken,refreshToken이 없으면 {@code null}
      */
     public String getTokenFromRequest(HttpServletRequest request) {
+        // 1. Authorization 헤더에서 토큰 추출
         String bearerToken = request.getHeader("Authorization");
-        if(StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            log.debug("요청에 포함 된 쿠키 토큰 [{}]", bearerToken);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            log.debug("Authorization 헤더에서 토큰 추출 {}", bearerToken.substring(0, 20) + "...");
             return bearerToken.substring(7);
         }
+        // 2. 요청에 있는 쿠키로 토큰 추출
         Cookie[] cookies = request.getCookies();
-        if(cookies != null) {
+        if (cookies != null) {
+            String accessToken = null;
+            String refreshToken = null;
+
             for (Cookie cookie : cookies) {
-                if("refreshToken".equals(cookie.getName())) {
-                    log.debug("cookie name : 'refreshToken'");
-                    return cookie.getValue();
-                } else if("accessToken".equals(cookie.getName())) {
-                    log.debug("cookie name : 'accessToken'");
-                    return null;
+                if ("accessToken".equals(cookie.getName())) {
+                    accessToken = cookie.getValue();
+                    log.debug("accessToken 쿠키 발견");
+                } else if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    log.debug("refreshToken 쿠키 발견");
                 }
+            }
+            // accessToken이 있으면 우선 사용, 없으면 refreshToken 사용
+            if (StringUtils.hasText(accessToken)) {
+                return accessToken;
+            } else if (StringUtils.hasText(refreshToken)) {
+                return refreshToken;
             }
         }
         return null;
