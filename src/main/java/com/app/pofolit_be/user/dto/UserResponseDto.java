@@ -6,7 +6,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 
 /**
- * for only response GET "api/v1/~me"
+ * UserResponseDTO
+ *
+ * @param email
+ * @param nickname
+ * @param profileImageUrl
+ * @param birthDay
+ * @param domain
+ * @param job
  */
 public record UserResponseDto(
         String email,
@@ -19,8 +26,8 @@ public record UserResponseDto(
         String job
 )
 {
-   public static UserResponseDto from(User user) {
-      return new UserResponseDto(user.getEmail(),user.getNickname(), user.getProfileImageUrl(), user.getBirthDay(), user.getDomain(), user.getJob());
-   }
+    public static UserResponseDto from(User user) {
+        return new UserResponseDto(user.getEmail(), user.getNickname(), user.getProfileImageUrl(), user.getBirthDay(), user.getDomain(), user.getJob());
+    }
 }
 
