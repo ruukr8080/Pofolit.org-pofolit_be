@@ -10,7 +10,7 @@ logging:
     org.hibernate.orm: INFO
 spring:
   config:
-    import: optional:file:.env[.properties]
+    import: optional:file:.env[.properties] # 배포 시 쓰는 환경변수
   data:
     redis:
       host: ${REDIS_HOST:127.0.0.1}
@@ -29,8 +29,11 @@ spring:
     password: ${DB_PASSWORD:sa}
   jwt:
     secret: ${JWT_SECRET:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
-    access-exp: ${JWT_EXP:36000}
-    refresh-exp: ${REFRESH_JWT_EXP:60480}
+    authority-key: "auth"
+    access-token-header: "Authorization"
+    refresh-token-cookie: "refreshToken"
+    access-token-exp-of-second: ${JWT_EXP:36000}
+    refresh-token-exp-of-day: ${REFRESH_JWT_EXP:60480}
   security:
     oauth2:
       client:
@@ -61,7 +64,7 @@ spring:
 spring:
   config:
     activate:
-      on-profile: "dev"
+      on-profile: "dev" # or "mydev"
   jpa:
     hibernate:
       ddl-auto: update
