@@ -22,5 +22,4 @@ public record SignupRequest(
         String domain,
         String job
 )
-{
-}
+{ }

@@ -1,32 +1,25 @@
-package com.app.pofolit_be.security;
+package com.app.pofolit_be.security.config;
 
-import com.app.pofolit_be.common.exception.ApiResponse;
-import com.app.pofolit_be.security.auth.AuthSuccessHandler;
-import com.app.pofolit_be.security.auth.jwt.TokenFilter;
-import com.app.pofolit_be.security.auth.properties.TokenProperties;
-import com.app.pofolit_be.user.service.SignService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.app.pofolit_be.common.exception.CustomAuthenticationEntryPoint;
+import com.app.pofolit_be.security.authentication.AuthSuccessHandler;
+import com.app.pofolit_be.security.service.SignService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,21 +30,24 @@ import java.util.List;
 @Slf4j
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties(TokenProperties.class)
+@EnableConfigurationProperties(JwtProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private static final String[] PERMIT_URLS = {
-            "/api/auth/**",
             "/favicon.ico",
             "/health",
             "/login/**",
+            "/error",
+            "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/v3/**"
+            "/swagger-ui.html"
     };
-    private final TokenFilter tokenFilter;
+
+    private final JwtFilter jwtFilter;
     private final SignService signService;
     private final AuthSuccessHandler authSuccessHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -59,10 +55,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(cors -> cors
                         .configurationSource(corsConfigurationSource()))
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(authEntryPoint()))
+                        .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PERMIT_URLS).permitAll()
                         .anyRequest().authenticated())
@@ -70,9 +68,8 @@ public class SecurityConfig {
                         .successHandler(authSuccessHandler)
                         .userInfoEndpoint(userInfo -> userInfo
                                 .oidcUserService(signService)))
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(tokenFilter,
+                .requestCache(cache -> cache.requestCache(new NullRequestCache()))// JSESSIONID 불필요.
+                .addFilterBefore(jwtFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -91,26 +88,5 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cors);
         return source;
-    }
-
-    @Bean
-    public AuthenticationEntryPoint authEntryPoint() {
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        return (req, res, exc) -> {
-            log.warn("\n[{}]\n[{}]", req.getRequestURI(), exc.getMessage());
-            ApiResponse errorResponse =
-                    ApiResponse.builder()
-                            .timestamp(LocalDateTime.now())
-                            .status(HttpStatus.UNAUTHORIZED.value())
-                            .error("UNAUTHORIZED")
-                            .message("인증이 필요합니다. 로그인을 먼저 진행해주세요.")
-                            .path(req.getRequestURI())
-                            .build();
-            res.setStatus(HttpStatus.UNAUTHORIZED.value());
-            res.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            res.setCharacterEncoding("UTF-8");
-            res.getWriter().write(objectMapper.writeValueAsString(errorResponse));
-        };
-
     }
 }

@@ -1,4 +1,4 @@
-package com.app.pofolit_be.security.auth;
+package com.app.pofolit_be.security.authentication;
 
 import com.app.pofolit_be.user.entity.User;
 import lombok.Getter;
@@ -14,24 +14,48 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * 인증 및 토큰 생성시 사용 되는 객체입니다.
+ * 관례상 네이밍은 `UserPrincipal`나 `CustomUserDetails`등 입니다.
+ * 시쿠리티 사용자 정보를 담는 객체
  * <p>
- * registrationId = "google"+"kakao"
+ * - JWT 기반 인증 {@link UserDetails}
+ * - OIDC 기반 인증 {@link OidcUser}
  * </p>
  */
+
 @Getter
-public class UserPrincipal implements OidcUser, UserDetails {
+public class OIDCUser implements OidcUser, UserDetails {
 
     private final User user;
     private final Map<String, Object> attributes;
+    private final OidcIdToken idToken;
+    private final OidcUserInfo userInfo;
 
-    public UserPrincipal(User user, Map<String, Object> attributes) {
+    // JWT 인증용
+    private OIDCUser(User user) {
+        this.user = user;
+        this.attributes = Collections.emptyMap();
+        this.idToken = null;
+        this.userInfo = null;
+    }
+
+    // OAuth2-OIDC 인증용
+    private OIDCUser(User user, Map<String, Object> attributes, OidcIdToken idToken, OidcUserInfo userInfo) {
         this.user = user;
         this.attributes = attributes;
+        this.idToken = idToken;
+        this.userInfo = userInfo;
+    }
+
+    public static OIDCUser from(User user) {
+        return new OIDCUser(user);
+    }
+
+    public static OIDCUser from(User user, OidcUser oidcUser) {
+        return new OIDCUser(user, oidcUser.getAttributes(), oidcUser.getIdToken(), oidcUser.getUserInfo());
     }
 
     @Override
-    public String getName() {
+    public String getName() { // token-claim = "subject"
         return user.getProviderId();
     }
 
@@ -52,7 +76,6 @@ public class UserPrincipal implements OidcUser, UserDetails {
         }
         return Collections.emptyList();
     }
-
 
     @Override
     public String getPassword() {
@@ -86,11 +109,12 @@ public class UserPrincipal implements OidcUser, UserDetails {
 
     @Override
     public OidcUserInfo getUserInfo() {
-        return null;
+        return this.userInfo;
     }
 
     @Override
     public OidcIdToken getIdToken() {
-        return null;
+        return this.idToken;
     }
+
 }

@@ -15,7 +15,7 @@ public class OAuth2AttributeMapper {
      * @param attributes 사용자 정보
      * @return 가공 된 SignDto 객체
      */
-    public SignDto getOAuth2UserAttribute(String registrationId, Map<String, Object> attributes, String oauthRefreshToken) {
+    public SignDto getOAuth2UserAttribute(String registrationId, Map<String, Object> attributes) {
         String email, nickname, profileImageUrl;
         String providerId = String.valueOf(attributes.get("sub"));
 
@@ -27,13 +27,12 @@ public class OAuth2AttributeMapper {
                 break;
             case "kakao":
                 nickname = (String) attributes.get("nickname");
-                profileImageUrl = (String) attributes.get("picture");
                 email = (String) attributes.get("email");
+                profileImageUrl = (String) attributes.get("picture");
                 break;
             default:
                 throw new IllegalArgumentException(registrationId);
         }
-
-        return new SignDto(email, nickname, profileImageUrl, registrationId, providerId, oauthRefreshToken);
+        return new SignDto(email, nickname, profileImageUrl, registrationId, providerId);
     }
 }

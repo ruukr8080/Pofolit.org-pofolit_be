@@ -1,202 +1,62 @@
 package com.app.pofolit_be.common.exception;
 
-import io.jsonwebtoken.JwtException;
+import com.app.pofolit_be.common.ApiResult;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * 인증, 사용자 비지니스로직 관련 예외 핸들러입니다.
+ * 전역 예외 핸들러입니다.
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
     /**
-     * JWT 관련 예외 처리
-     */
-    @ExceptionHandler(JwtException.class)
-    public ResponseEntity<ApiResponse> handleJwtException(JwtException ex, WebRequest request) {
-        log.warn("JWT 예외 발생: {}", ex.getMessage());
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("JWT_ERROR")
-                .message("JWT 토큰이 유효하지 않습니다")
-                .path(getPath(request))
-                .build();
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-    }
-
-    /**
-     * OAuth2 인증 예외 처리
-     */
-    @ExceptionHandler(OAuth2AuthenticationException.class)
-    public ResponseEntity<ApiResponse> handleOAuth2Exception(OAuth2AuthenticationException ex, WebRequest request) {
-        log.warn("OAuth2 인증 예외 발생: {}", ex.getMessage());
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("OAUTH2_ERROR")
-                .message("소셜 로그인 처리 중 오류가 발생했습니다")
-                .path(getPath(request))
-                .build();
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-    }
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
-        log.warn("인증 실패: {}", ex.getMessage());
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("AUTHENTICATION_FAILED")
-                .message("인증에 실패했습니다")
-                .path(getPath(request))
-                .build();
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-    }
-
-    /**
-     * 권한 부족 예외 처리
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
-        log.warn("접근 권한 없음: {}", ex.getMessage());
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.FORBIDDEN.value())
-                .error("ACCESS_DENIED")
-                .message("접근 권한이 없습니다")
-                .path(getPath(request))
-                .build();
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
-    }
-
-    /**
-     * Validation 예외 처리
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse> handleValidationExceptions(MethodArgumentNotValidException ex, WebRequest request) {
-        log.warn("검증 오류: {}", ex.getMessage());
-
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
-        );
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("VALIDATION_FAILED")
-                .message("입력값 검증에 실패했습니다")
-                .path(getPath(request))
-                .details(errors)
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    /**
-     * @PathVariable 타입 불일치 예외 처리.
-     */
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, WebRequest request) {
-        log.warn("파라미터 타입 불일치: {}", ex.getMessage());
-
-        String message = String.format("['%s'] 잘못된 파라미터. 필요한 타입 ['%s']. 들어온 값은 ['%s']",
-                ex.getName(), ex.getRequiredType().getSimpleName(), ex.getValue());
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("BAD_REQUEST")
-                .message(message)
-                .path(getPath(request))
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    /**
-     * 우리가 만든 비즈니스 예외 처리. ㅇㅋ?
-     * CustomException 던지면 여기서 다 잡아서 이쁜 JSON으로 내려줌.
+     * 직접 정의한 {@link CustomException}을 처리합니다.
+     *
+     * @param e CustomException.instance
+     * @param request request
+     * @return ApiResult로 감싸진 에러 응답
      */
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ApiResponse> handleCustomException(CustomException ex, WebRequest request) {
-        log.warn("비즈니스 예외 발생: [{}], {}", ex.getErrorCode(), ex.getMessage());
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(ex.getStatus().value())
-                .error(ex.getErrorCode())
-                .message(ex.getMessage())
-                .path(getPath(request))
-                .build();
-
-        return new ResponseEntity<>(error, ex.getStatus());
+    public ResponseEntity<ApiResult<Void>> handleRuntimeException(CustomException e, WebRequest request) {
+        ExCode exCode = e.getExCode();
+        log.warn("\n[CustomException] 에러코드,메세지,경로: \n[{}]\n[{}]\n[{}]",
+                exCode.name(), exCode.getMessage(), request.getDescription(false));
+        ApiResult<Void> result = ApiResult.error(
+                exCode.getStatus().value(),
+                exCode.name(),
+                exCode.getMessage()
+        );
+        return new ResponseEntity<>(result,
+                exCode.getStatus()
+        );
     }
 
     /**
-     * 일반적인 RuntimeException 처리
+     * 지정된 쿠키가 누락되면 발생합니다ㅏ. {@link RequestCookieException}
+     *
+     * @param e RequestCookieException.instance
+     * @param request request
+     * @return ApiResult로 감싸진 에러 응답
      */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
-        log.error("Runtime 예외 발생: {}", ex.getMessage(), ex);
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("INTERNAL_SERVER_ERROR")
-                .message("서버 내부 오류가 발생했습니다")
-                .path(getPath(request))
-                .build();
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
-
-    /**
-     * 모든 예외의 최종 처리기
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse> handleGlobalException(Exception ex, WebRequest request) {
-        log.error("예상치 못한 예외 발생: {}", ex.getMessage(), ex);
-
-        ApiResponse error = ApiResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("UNEXPECTED_ERROR")
-                .message("예상치 못한 오류가 발생했습니다")
-                .path(getPath(request))
-                .build();
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
-
-    /**
-     * 요청 경로 추출 유틸리티 메서드
-     */
-    private String getPath(WebRequest request) {
-        return request.getDescription(false).replace("uri=", "");
+    @ExceptionHandler(RequestCookieException.class)
+    public ResponseEntity<ApiResult<Void>> handleRequestCookieException(RequestCookieException e, WebRequest request) {
+        ExCode exCode = e.getExCode();
+        log.warn("\n[RequestCookieException] 에러코드,메세지,경로: \n[{}]\n[{}]\n[{}]",
+                exCode.name(), exCode.getMessage(), request.getDescription(false));
+        ApiResult<Void> result = ApiResult.error(
+                exCode.getStatus().value(),
+                exCode.name(),
+                exCode.getMessage()
+        );
+        return new ResponseEntity<>(result,
+                exCode.getStatus()
+        );
     }
 }

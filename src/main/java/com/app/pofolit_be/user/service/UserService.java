@@ -1,25 +1,31 @@
 package com.app.pofolit_be.user.service;
 
+import com.app.pofolit_be.common.exception.CustomException;
+import com.app.pofolit_be.common.exception.ExCode;
 import com.app.pofolit_be.user.dto.SignDto;
-import com.app.pofolit_be.user.dto.SignupRequest;
 import com.app.pofolit_be.user.dto.UserResponseDto;
 import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
- * 사용자 비즈니스 로직을 처리합니다.
- * `oauth2 API`로부터 발급받은 토큰을 1차로 저장합니다.
+ * 사용자 비즈니스 로직입니다.
  * <p>
- * OAuth2 로그인 - 신규사용자: GUEST 권한으로 회원가입.
+ * 1. updateOrSaveUser() :
+ * - 신규사용자: GUEST 권한으로 회원가입.
  * - 기존사용자: 소셜 정보 업데이트.
+ * 2. signup() :
  * </p>
+ * TODO:User user; 떄문에 생기는 레이스 컨디션 (Race Condition)
+ * 만약 동일한 신규 유저가 거의 동시에 두 번 로그인 요청을 보낸다면?
+ * `@Transactional`로 블록 전체가 하나의 원자적인 DB 작업으로 묶이도록 하는 거야.
+ * 이렇게 하면 DB의 유니크 제약 조건에 의해 동시성 문제가 발생했을 때 자동으로 예외를 던져주기 때문에 더 안전.
  */
 @Service
 @RequiredArgsConstructor
@@ -27,40 +33,10 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
 
-    @Transactional
-    public User updateOrSaveUser(SignDto signDto) {
-        Optional<User> optionalUser = userRepository.findByRegistrationIdAndProviderId(signDto.registrationId(), signDto.providerId());
-        if(optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            user.update(signDto);
-            return user;
-        }else {
-            Optional<User> userByEmailOptional = userRepository.findUserByEmail(signDto.email());
-            if (userByEmailOptional.isPresent()) {
-                User existingUser = userByEmailOptional.get();
-                throw new IllegalArgumentException("이미 " + existingUser.getRegistrationId().toUpperCase()
-                        + " 로 가입된 계정이 있습니다."
-                );
-            }
-            return userRepository.save(signDto.toEntity());
-        }
+    public UserResponseDto getUser(String providerId) {
+        User user = userRepository.findByProviderId(providerId)
+                .orElseThrow(() -> new UsernameNotFoundException("providerId로 조회 실패.: " + providerId));
+        return UserResponseDto.from(user);
     }
 
-    @Transactional
-    public void signup(UUID userId, SignupRequest signupRequest) {
-        User user = userRepository.findUserById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
-        log.debug("회원가입 요청: 사용자 ID [{}], 요청 데이터 [{}]", userId, signupRequest);
-        user.signup(signupRequest);
-    }
-
-    @Transactional
-    public UserResponseDto getUserInfo(UUID userid) {
-        log.debug("사용자 정보 조회 요청: 사용자 ID [{}]", userid);
-        User user = userRepository.findUserById(userid)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userid));
-        UserResponseDto response = UserResponseDto.from(user);
-        log.info("사용자 정보 조회 완료: EMAIL [{}], 닉네임 [{}]", user.getEmail(), user.getNickname());
-        return response;
-    }
 }

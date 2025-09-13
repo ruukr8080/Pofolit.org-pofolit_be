@@ -1,17 +1,21 @@
 package com.app.pofolit_be.common.exception;
 
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 
+/**
+ * Runtime중 발생한 Exception 입니다.
+ * ErrorCode에 따른 메시지를 반환합니다.
+ */
 @Getter
+@RequiredArgsConstructor
 public class CustomException extends RuntimeException {
 
-    private final HttpStatus status;
-    private final String errorCode;
+    private final ExCode exCode;
 
-    public CustomException(final String message, final HttpStatus status, final String errorCode) {
-        super(message);
-        this.status = status;
-        this.errorCode = errorCode;
+    @Override
+    public String getMessage() {
+        return this.exCode.getMessage();
     }
+
 }

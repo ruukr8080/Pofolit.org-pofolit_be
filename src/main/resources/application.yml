@@ -28,12 +28,12 @@ spring:
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:sa}
   jwt:
-    secret: ${JWT_SECRET:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
-    authority-key: "auth"
+    secret: ${SECRET_KEY}
+    authority-key: "sub"
     access-token-header: "Authorization"
-    refresh-token-cookie: "refreshToken"
-    access-token-exp-of-second: ${JWT_EXP:36000}
-    refresh-token-exp-of-day: ${REFRESH_JWT_EXP:60480}
+    refresh-token-cookie: "rt"
+    access-token-exp-of-second: ${ACCESS_TOKEN_TTL:3} # 3분. 배포시 변경.
+    refresh-token-exp-of-day: ${REFRESH_TOKEN_TTL:1} # 1일. 배포시 변경
   security:
     oauth2:
       client:
@@ -77,3 +77,4 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     clean-disabled: true
+

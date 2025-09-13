@@ -4,13 +4,14 @@ import com.app.pofolit_be.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
-import java.util.UUID;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findUserByEmail(String email);
 
     Optional<User> findByRegistrationIdAndProviderId(String registrationId, String providerId);
 
-    Optional<User> findUserById(UUID id);
+    Optional<User> findByProviderId(String providerId);
 
-    Optional<User> findUserByEmail(String email);
+    Optional<User> findUserById(Long id);
 }
