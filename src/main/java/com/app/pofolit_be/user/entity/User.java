@@ -3,10 +3,7 @@ package com.app.pofolit_be.user.entity;
 import com.app.pofolit_be.user.dto.SignDto;
 import com.app.pofolit_be.user.dto.SignupRequest;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 
@@ -38,8 +35,10 @@ public class User {
     private String providerId;
     private String registrationId;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     private Role role;
+
 
     @Builder
     public User(String email, String nickname, String profileImageUrl, String providerId,
