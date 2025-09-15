@@ -4,11 +4,11 @@
 - **Java 17**, **Spring Boot 3.5.4** , **Gradle-jar**
 - IDE: **IntelliJ IDEA**
 - Management process: **Notion** _sprint_style_
-- Database: { **MySQL** }
+- Database: { **MySQL**,**H2(인메모리)**,**redis** }
 - CI/CD: { **Jenkins**, **Docker** } 
 - Dependencies:
   - JPA , mapstruct , flyway-core 
-  - Spring-Security ,  JWT 12.6 , OAuth2: _kakao,google_
+  - Spring-Security ,  JWT 0.12.6 , OAuth2: _kakao,google_
   - JUnit , Mockito
   - Swagger-ui
 - 패키지 구조
