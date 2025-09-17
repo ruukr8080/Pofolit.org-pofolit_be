@@ -8,7 +8,7 @@ import org.springframework.web.bind.MissingRequestCookieException;
  * 지정된 쿠키가 요청에서 없으면 호출됩니다.
  */
 @Getter
-public class RequestCookieException extends MissingRequestCookieException {
+public class RequestCookieException extends MissingRequestCookieException implements ExCodeException {
 
     private final ExCode exCode;
 

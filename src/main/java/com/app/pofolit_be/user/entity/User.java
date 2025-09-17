@@ -1,5 +1,6 @@
 package com.app.pofolit_be.user.entity;
 
+import com.app.pofolit_be.security.SecurityLevel;
 import com.app.pofolit_be.user.dto.SignDto;
 import com.app.pofolit_be.user.dto.SignupRequest;
 import jakarta.persistence.*;
@@ -38,6 +39,10 @@ public class User {
     @Setter
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Setter
+    @Enumerated(EnumType.STRING)
+    private SecurityLevel accessLv;
 
 
     @Builder

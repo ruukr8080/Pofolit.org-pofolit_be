@@ -1,6 +1,8 @@
 package com.app.pofolit_be.user.dto;
 
+import com.app.pofolit_be.user.entity.Role;
 import com.app.pofolit_be.user.entity.User;
+import io.jsonwebtoken.Claims;
 
 import java.time.LocalDate;
 
@@ -20,7 +22,8 @@ public record UserResponseDto(
         String profileImageUrl,
         LocalDate birthDay,
         String domain,
-        String job
+        String job,
+        Role role
 )
 {
     public static UserResponseDto from(User user) {
@@ -29,6 +32,19 @@ public record UserResponseDto(
                 user.getProfileImageUrl(),
                 user.getBirthDay(),
                 user.getDomain(),
-                user.getJob());
+                user.getJob(),
+                user.getRole()
+        );
+    }
+    public static UserResponseDto fromPreTokenClaims(Claims claims) {
+        return new UserResponseDto(
+                (String) claims.get("email"),
+                (String) claims.get("nickname"),
+                (String) claims.get("picture"),
+                null,
+                null,
+                null,
+                null
+        );
     }
 }

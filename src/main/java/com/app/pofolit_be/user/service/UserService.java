@@ -2,16 +2,17 @@ package com.app.pofolit_be.user.service;
 
 import com.app.pofolit_be.common.exception.CustomException;
 import com.app.pofolit_be.common.exception.ExCode;
+import com.app.pofolit_be.security.authentication.AuthenticatedUser;
 import com.app.pofolit_be.user.dto.SignDto;
-import com.app.pofolit_be.user.dto.UserResponseDto;
+import com.app.pofolit_be.user.dto.SignupRequest;
+import com.app.pofolit_be.user.entity.Role;
 import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -33,10 +34,67 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
 
-    public UserResponseDto getUser(String providerId) {
-        User user = userRepository.findByProviderId(providerId)
-                .orElseThrow(() -> new UsernameNotFoundException("providerId로 조회 실패.: " + providerId));
-        return UserResponseDto.from(user);
+    public void saveOrUpdateUser(SignDto signDto) {
+        userRepository.findBySocialOrEmail(
+                        signDto.registrationId(),
+                        signDto.providerId(),
+                        signDto.email()
+                )
+                .map(user -> {// 같은 이메일인데 소셜 계정 정보가 다를때,
+                    if(!user.getRegistrationId().equals(signDto.registrationId()) ||
+                            !user.getProviderId().equals(signDto.providerId())) {
+                        throw new CustomException(ExCode.DUPLICATE_ACCOUNT);
+                    }
+                    return updateUser(user, signDto);
+                })
+                .orElseGet(() -> saveUser(signDto));
     }
 
+    public User updateUser(User user, SignDto signDto) {
+        user.updateUser(signDto);
+        if(user.getRole() == null) {
+            user.setRole(Role.GUEST);
+        }
+        if(user.getRole() == Role.GUEST) {
+            user.setRole(Role.USER);
+        }
+        return user;
+    }
+
+    private User saveUser(SignDto signDto) {
+        return userRepository.save(signDto.toEntity());
+    }
+
+    public Optional<User> getUserProviderId(String providerId) {
+        return userRepository.findByProviderId(providerId);
+    }
+    // TODO: 맘에 안드는 메서드. 개선하고싶다.: 필터 통과하는 Authenticate객체를 만들때 최대한 DB접근(userEntity) 안하기, 책임분리 다 위반.
+    //  1. DB접근을 하되 엔티티에 providerId만 빼서 oidcUser구현체한테 전달하기 실패.
+    //  - 그럼 적어도 DB조회할땐 providerId 말고 user_id로 조회해서 조회시간이라도 줄여보자.
+    //  어차피 가입할때 providerId 생성되니까 user_id를providerId로 사용하기. -> 큰일날듯.
+    public AuthenticatedUser getAuthenticatedUserFrom(String providerIdFromUserEntity) {
+        User user = getUserProviderId(providerIdFromUserEntity).orElseThrow(()-> new RuntimeException("user not found"));
+
+        Map<String, Object> claims = Map.of(
+                "sub", user.getProviderId(),
+                "email", user.getEmail(),
+                "nickname", user.getNickname(),
+                "role", user.getRole().getKey()
+        );
+
+        // AuthenticatedUser의 PreTokenFrom 메서드를 재활용하여 객체 생성
+        return AuthenticatedUser.PreTokenFrom(claims);
+    }
+
+    public User getUserById(long id) {
+        return userRepository.findUserById(id);
+    }
+
+    private User userSignup(User user, SignupRequest signupRequest) {
+        user.signup(signupRequest);
+        if(user.getRole() == Role.GUEST) {
+            user.setRole(Role.USER);
+        }
+        return user;
+    }
 }
