@@ -1,5 +1,6 @@
 package com.app.pofolit_be.common.exception;
 
+import com.app.pofolit_be.common.ApiResponseAdvice;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,7 +10,7 @@ import org.springframework.http.HttpStatus;
 /**
  * 구현 된 모든 {@code Custom~~~Exception}예외 클래스는
  * {@link ExCode}를 참좋하고
- * {@link GlobalExceptionHandler}를 통해 클라이언트에게 전달합니다.
+ * {@link ApiResponseAdvice}를 통해 클라이언트에게 전달합니다.
  */
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,6 +38,7 @@ public enum ExCode {
     INVALID_TOKEN(HttpStatus.INTERNAL_SERVER_ERROR, "토큰 관련 에러 발생"),
     DUPLICATE_SOCIAL_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입 한 사용자입니다."),
+    DUPLICATE_ACCOUNT(HttpStatus.CONFLICT, "이미 가입  된 계정 있습니다."),
     DUPLICATE_USER(HttpStatus.CONFLICT, "이미 존재하는 사용자입니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 존재하는 닉네임 입니다"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰 유효기간이 만료되었습니다"),

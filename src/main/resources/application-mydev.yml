@@ -5,8 +5,8 @@ uri:
 server:
   port: 8080
 logging:
-  level: # TRACE < DEBUG < INFO < WARN < ERROR
-    root: INFO
+  level:
+    root: info # TRACE < DEBUG < INFO < WARN < ERROR
     org.hibernate.orm: WARN
 spring:
   config:
@@ -19,9 +19,9 @@ spring:
       timeout: 2000ms
       lettuce:
         pool:
-          max-active: 8
+          max-active: 2
           max-wait: -1ms
-          max-idle: 8
+          max-idle: 3
           min-idle: 0
   datasource:
     #    url: jdbc:h2:mem:testdb # H2 in memory db
@@ -43,11 +43,11 @@ spring:
     baseline-on-migrate: true
     clean-disabled: true
   jwt:
-    secret: ${SECRET_KEY}
-    iss: "pofolit"
-    aud: "role"
-    at-ttl: ${ACCESS_TOKEN_TTL:1800}
-    rt-ttl: ${REFRESH_TOKEN_TTL:604800}
+    key-size: 1024
+    iss: pofolit
+    p-ttl: ${PRE_TOKEN_TTL:1800}
+    a-ttl: ${ACCESS_TOKEN_TTL:1800}
+    r-ttl: ${REFRESH_TOKEN_TTL:604800}
   security:
     oauth2:
       client:
@@ -77,3 +77,19 @@ spring:
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
+
+exclude:
+  path:
+    exception:
+      - /v3/api-docs
+      - /swagger-ui/**
+    filter:
+      - /health
+      - /error
+      - /login/**
+      - /signup/**
+      - /v3/api-docs/**
+      - /swagger-ui/**
+      - /swagger-resource/**
+    baseline-on-migrate: true
+    clean-disabled: true

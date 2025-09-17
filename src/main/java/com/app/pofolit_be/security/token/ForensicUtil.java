@@ -31,8 +31,8 @@ public class ForensicUtil {
     };
 
     static {
-        // TODO: whonix,tails 등 해킹에 많이  사용되는 os들을 하드코딩으로 넣거나
-        //  이런거 지원해주는 라이브러리 찾아서  사용하기.
+        // TODO: whonix,tails 등 해킹에 많이 사용되는 os들을 하드코딩으로 넣거나
+        //  이런거 지원해주는 라이브러리 찾아서 넣어야징.
         // OS Map (from most specific to least specific)
         OS_MAP.put("NT 6.0", "Windows Vista/Server 2008");
         OS_MAP.put("NT 5.2", "Windows Server 2003");

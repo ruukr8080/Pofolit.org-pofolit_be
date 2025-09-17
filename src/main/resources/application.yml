@@ -1,16 +1,16 @@
 uri:
   auth:
-    base: "http://localhost:3000"
+    base: "http://localhost:3000/auth/callback"
     signup: "http://localhost:3000/signup"
 server:
   port: 8080
 logging:
   level:
-    root: INFO
-    org.hibernate.orm: INFO
+    root: info # TRACE < DEBUG < INFO < WARN < ERROR
+    org.hibernate.orm: WARN
 spring:
   config:
-    import: optional:file:.env[.properties] # 배포 시 쓰는 환경변수
+    import: optional:classpath:.env[.properties] # !배포 시 "classpath-> file"
   data:
     redis:
       host: ${REDIS_HOST:127.0.0.1}
@@ -19,62 +19,77 @@ spring:
       timeout: 2000ms
       lettuce:
         pool:
-          max-active: 8
+          max-active: 2
           max-wait: -1ms
-          max-idle: 8
+          max-idle: 3
           min-idle: 0
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/pofolitdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:sa}
+    #    url: jdbc:h2:mem:testdb # H2 in memory db
+    url: jdbc:h2:file:/h2/pofolitdb;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate.ddl-auto: update #
+    properties.hibernate.format_sql: true
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    clean-disabled: true
   jwt:
-    secret: ${SECRET_KEY}
-    authority-key: "sub"
-    access-token-header: "Authorization"
-    refresh-token-cookie: "rt"
-    access-token-exp-of-second: ${ACCESS_TOKEN_TTL:3} # 3분. 배포시 변경.
-    refresh-token-exp-of-day: ${REFRESH_TOKEN_TTL:1} # 1일. 배포시 변경
+    key-size: 1024
+    iss: pofolit
+    p-ttl: ${PRE_TOKEN_TTL:1800}
+    a-ttl: ${ACCESS_TOKEN_TTL:1800}
+    r-ttl: ${REFRESH_TOKEN_TTL:604800}
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
               - openid
               - email
               - profile
           kakao:
-            client-id: ${KAKAO_CLIENT_ID}
-            client-secret: ${KAKAO_CLIENT_SECRET}
+            client-id: ${KAKAO_CLIENT_ID:}
+            client-secret: ${KAKAO_CLIENT_SECRET:}
             client-authentication-method: client_secret_post
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
               - openid
-              - account_email
-              - profile_nickname
-              - profile_image
-            client-name: Kakao
+            client-name: kakao
         provider:
           kakao:
             issuer-uri: https://kauth.kakao.com
----
-spring:
-  config:
-    activate:
-      on-profile: "dev" # or "mydev"
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
-    open-in-view: false
-  flyway:
-    enabled: false
-    locations: classpath:db/migration
+          google:
+            # 배포시 authorization-uri에서 access_type=offline 파라미터 제거
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+exclude:
+  path:
+    exception:
+      - /v3/api-docs
+      - /swagger-ui/**
+    filter:
+      - /health
+      - /error
+      - /login/**
+      - /signup/**
+      - /v3/api-docs/**
+      - /swagger-ui/**
+      - /swagger-resource/**
     baseline-on-migrate: true
     clean-disabled: true
-
