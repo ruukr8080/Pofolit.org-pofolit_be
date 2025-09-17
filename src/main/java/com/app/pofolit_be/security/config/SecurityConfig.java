@@ -1,7 +1,8 @@
 package com.app.pofolit_be.security.config;
 
 import com.app.pofolit_be.common.exception.CustomAuthenticationEntryPoint;
-import com.app.pofolit_be.security.authentication.AuthSuccessHandler;
+import com.app.pofolit_be.common.external.UriPath;
+import com.app.pofolit_be.security.authentication.AuthFilter;
 import com.app.pofolit_be.security.service.SignService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,23 +34,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private static final String[] PERMIT_URLS = {
-            "/favicon.ico",
-            "/health",
-            "/login/**",
-            "/error",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html"
-    };
-
-    private final JwtFilter jwtFilter;
     private final SignService signService;
-    private final AuthSuccessHandler authSuccessHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final UriPath excludePath;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, AuthFilter jwtFilter) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -62,13 +51,12 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PERMIT_URLS).permitAll()
+                        .requestMatchers(excludePath.getFilter()).permitAll() // 문자열 배열을 직접 넘겨주는게 제일 깔끔함
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler(authSuccessHandler)
                         .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(signService)))
-                .requestCache(cache -> cache.requestCache(new NullRequestCache()))// JSESSIONID 불필요.
+                                .oidcUserService(signService))
+                        .successHandler(signService))
                 .addFilterBefore(jwtFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
