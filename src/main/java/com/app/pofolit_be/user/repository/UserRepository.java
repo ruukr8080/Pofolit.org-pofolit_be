@@ -18,7 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                        @Param("provId") String providerId,
                                        @Param("email") String email);
 
-    Optional<User> findByProviderId(String providerId);
+    User findByProviderId(String providerId);
 
     User findUserById(Long id);
 }

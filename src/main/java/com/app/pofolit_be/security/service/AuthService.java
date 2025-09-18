@@ -43,14 +43,26 @@ public class AuthService {
     private final JwtProperties jwtProperties;
     public SecurityLevel securityLevel;
 
-    public Map<String, ResponseCookie> issueAllTokens(AuthenticatedUser authUser) {
+    public void issuePreToken(HttpServletResponse response) {
+        String preToken = tokenUtil.generatePreToken();
+        ResponseCookie cookie = ResponseCookie.from("pre", preToken)
+                .httpOnly(false)
+                .secure(false)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(jwtProperties.pTtl())
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+    }
 
-        String preToken = tokenUtil.generatePreToken(authUser);
+    public Map<String, ResponseCookie> issuePairTokens(AuthenticatedUser authUser) {
+        // IdToken만 들어옴.
+
+        authUser.getIdToken().getClaims();
         String accessToken = tokenUtil.generateAccessToken(authUser, securityLevel);
         String refreshToken = tokenUtil.generateRefreshToken(authUser, securityLevel);
         Map<String, ResponseCookie> cookies = new HashMap<>();
 
-        cookies.put("pre", cookieUtil.createCookie("pre", preToken, false, 60 * 5));
         cookies.put("accessToken", cookieUtil.createCookie("accessToken", accessToken, false, 60 * 60));
         cookies.put("refreshToken", cookieUtil.createCookie("refreshToken", refreshToken, true, 604800));
 
@@ -60,7 +72,7 @@ public class AuthService {
     public Authentication createAuthentication(String token) {
         Claims claims = validator.parseClaims(token);
         String sub = claims.getSubject();
-        String role = claims.get("role", String.class);
+        String role = claims.get("aud", String.class);
         Collection<? extends GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
         return new UsernamePasswordAuthenticationToken(sub, null, authorities);

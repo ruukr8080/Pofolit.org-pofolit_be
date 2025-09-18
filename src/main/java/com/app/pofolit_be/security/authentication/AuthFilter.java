@@ -41,13 +41,19 @@ public class AuthFilter extends OncePerRequestFilter {
     private final AuthService authService;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        //  TODO: 프리토큰 먼저 주고 시작.
+        String token = extractAnyToken(request);
+        SecurityContext context = SecurityContextHolder.getContext();
+
         try {
-            String token = extractAnyToken(request);
-            SecurityContext context = SecurityContextHolder.getContext();
-            if(StringUtils.hasText(token)) {
+            if (!StringUtils.hasText(token)) {
+                // 인증토큰 없는 최초 요청엔 preToken쿠키 줌
+                authService.issuePreToken(response);
+//                authService.issuePreToken(response);
+            }else {
                 tokenValidator.validateToken(token);
                 Authentication authentication = authService.createAuthentication(token);
                 context.setAuthentication(authentication);

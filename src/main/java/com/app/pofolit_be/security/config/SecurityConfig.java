@@ -30,7 +30,7 @@ import java.util.List;
 @Slf4j
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class})
 @RequiredArgsConstructor
 public class SecurityConfig {
 

@@ -30,7 +30,7 @@ spring:
     username: sa
     password:
   jpa:
-    hibernate.ddl-auto: update #
+    hibernate.ddl-auto: create #
     properties.hibernate.format_sql: true
     open-in-view: false
   h2:
@@ -43,7 +43,7 @@ spring:
     baseline-on-migrate: true
     clean-disabled: true
   jwt:
-    key-size: 1024
+    key-size: 2048 # 1024 3078
     iss: pofolit
     p-ttl: ${PRE_TOKEN_TTL:1800}
     a-ttl: ${ACCESS_TOKEN_TTL:1800}

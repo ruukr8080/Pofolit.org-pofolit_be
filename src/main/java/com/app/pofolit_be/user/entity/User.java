@@ -36,24 +36,25 @@ public class User {
     private String providerId;
     private String registrationId;
 
-    @Setter
-    @Enumerated(EnumType.STRING)
-    private Role role;
+//    @Setter
+//    @Enumerated(EnumType.STRING)
+//    private Role role;
 
     @Setter
+    @Getter
     @Enumerated(EnumType.STRING)
-    private SecurityLevel accessLv;
+    private SecurityLevel securityLevel;
 
 
     @Builder
     public User(String email, String nickname, String profileImageUrl, String providerId,
-                String registrationId, Role role) {
+                String registrationId, SecurityLevel securityLevel) {
         this.email = email;
         this.nickname = nickname;
         this.profileImageUrl = profileImageUrl;
         this.providerId = providerId;
         this.registrationId = registrationId;
-        this.role = role;
+        this.securityLevel = securityLevel;
     }
 
     public void updateUser(SignDto signDto) {
@@ -66,6 +67,6 @@ public class User {
         this.birthDay = request.birthDay();
         this.domain = request.domain();
         this.job = request.job();
-        this.role = Role.USER;
+        this.securityLevel = SecurityLevel.fromLv(securityLevel.getLv());
     }
 }

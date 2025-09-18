@@ -27,7 +27,7 @@ public record SignDto(
                 .profileImageUrl(this.profileImageUrl)
                 .registrationId(registrationId)
                 .providerId(providerId)
-                .role(Role.GUEST)
                 .build();
     }
+
 }

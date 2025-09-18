@@ -1,86 +1,72 @@
 package com.app.pofolit_be.security.authentication;
 
-import com.app.pofolit_be.security.SecurityLevel;
 import com.app.pofolit_be.user.entity.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
-/**
- * 관례상 네이밍은 `UserPrincipal`나 `CustomUserDetails`등 입니다.
- * 시쿠리티 사용자 정보를 담는 객체
- * <p>
- * - OIDC 기반 인증 {@link OidcUser}
- * </p>
- */
 @Getter
 public class AuthenticatedUser implements OidcUser {
 
-
+    /**
+     * OidcUserRequest: 최상위 객체
+     * OidcIdToken: Map<String, Object> claims, subject expiresAt issuedAt (JWT).
+     * OidcUserInfo: 사용자의 프로필에 대한 상세 정보 (JSON).
+     * OidcUser: 위 둘을 하나로 통합한 시큐리티 객체.
+     */
+    private final User user;                // 우리 서비스 DB의 User 엔티티
     private final Map<String, Object> attributes;
     private final OidcIdToken idToken;
     private final OidcUserInfo userInfo;
-    SecurityLevel accessLv;
 
-    // OAuth2 전용 생성자
-    private AuthenticatedUser(Map<String, Object> attributes,
-                              OidcIdToken idToken,
-                              OidcUserInfo userInfo) {
+
+    //(DB 유저 + OIDC 정보)
+    public AuthenticatedUser(User user, Map<String, Object> attributes, OidcIdToken idToken, OidcUserInfo userInfo) {
+        this.user = user;
         this.attributes = attributes;
         this.idToken = idToken;
         this.userInfo = userInfo;
     }
 
-    // 로그인 안한 유저 / PreToken 용
-    public static AuthenticatedUser PreTokenFrom(Map<String, Object> claims) {
+    // OidcUserRequest만 받음
+    public AuthenticatedUser(OidcUserRequest request) {
+        this.user = null;
+        this.idToken = request.getIdToken();
+        this.userInfo = null; // loadUser에서 없는 userInfo
+        this.attributes = request.getClientRegistration()
+                .getProviderDetails()
+                .getConfigurationMetadata();
+    }
+    // JWT에서 로드할 때 쓰는 정적 팩토리 메서드
+    public static AuthenticatedUser fromUserEntity(User user) {
         return new AuthenticatedUser(
-                claims,
+                user,
+                Collections.emptyMap(),
                 null,
                 null
         );
     }
-
-    public static AuthenticatedUser TokenFrom(OidcUser oidcUser) {
-        if(oidcUser.getUserInfo() == null || oidcUser.getUserInfo().getNickName().isBlank()) {
-            System.out.println("oidcUser UserInfo가 없거나 닉넴이 없음.");
-            // TODO: 신규 가입 직후 닉네임이 없을 수도 있음 닉네임 플래그 (세션 or 토큰 claim)
-        }
+    // 익명사용자용 팩토리 메서드
+    public static AuthenticatedUser anonymous() {
         return new AuthenticatedUser(
-                oidcUser.getAttributes(),
-                oidcUser.getIdToken(),
-                oidcUser.getUserInfo()
+                null,
+                Collections.emptyMap(),
+                null,
+                null
         );
     }
-
-
-    @Override
-    public String getName() {
-        return idToken != null ? idToken.getSubject() : (String) attributes.getOrDefault("sub", "anonymous");
-    }
-
-    @Override
-    public Map<String, Object> getAttributes() {
-        return attributes;
-    }
-
-    // 유저 권한 반환
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        String role = (String) attributes.getOrDefault("role", "ROLE_GUEST");
-        return List.of(new SimpleGrantedAuthority(role));
-    }
-
     @Override
     public Map<String, Object> getClaims() {
-        return attributes != null ? attributes : Collections.emptyMap();
+        // claims,tokenvalue,exp,iat
+        return idToken != null ? idToken.getClaims() : Collections.emptyMap();
     }
 
     @Override
@@ -92,6 +78,24 @@ public class AuthenticatedUser implements OidcUser {
     public OidcIdToken getIdToken() {
         return idToken;
     }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        String secureLv = user != null ? user.getSecurityLevel().getLv() : "Lv0";
+        return Collections.singletonList(new SimpleGrantedAuthority(secureLv));
+    }
+
+    @Override
+    public String getName() {
+        return user != null ? user.getProviderId() : (String) getClaims().get("sub");
+    }
+
+    public boolean isOidcLogin() {
+        return this.idToken != null;
+    }
 }
-
-

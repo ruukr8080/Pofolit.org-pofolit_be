@@ -3,8 +3,6 @@ package com.app.pofolit_be.security.token;
 import com.app.pofolit_be.security.SecurityLevel;
 import com.app.pofolit_be.security.authentication.AuthenticatedUser;
 import com.app.pofolit_be.security.config.JwtProperties;
-import com.app.pofolit_be.user.entity.User;
-import com.app.pofolit_be.user.service.UserService;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +11,9 @@ import org.springframework.stereotype.Service;
 
 import java.security.PrivateKey;
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * TODO:멀티 디바이스 관리,성능 최적화,
@@ -44,7 +44,6 @@ public class TokenUtil {
 
         String refreshToken = Jwts.builder()
                 .subject(authUser.getName())
-                .issuer(jwtProperties.iss())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .id(jti)
@@ -65,44 +64,36 @@ public class TokenUtil {
                 "email", authUser.getAttributes().get("email"),
                 "nickname", authUser.getAttributes().get("nickname"),
                 "picture", authUser.getAttributes().get("picture"),
-                "role", securityLevel.getLv()
+                "secureLv", securityLevel.getLv()
         );
         return Jwts.builder()
                 .subject(authUser.getName())
-                .issuer(jwtProperties.iss())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .id(jti)
+                .audience().add(SecurityLevel.LV0.getAccess()).and()
                 .claims(claims)
                 .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
     }
 
-    public String generatePreToken(AuthenticatedUser authUser) {
+    public String generatePreToken() {
         Instant now = Instant.now();
         Instant exp = now.plusSeconds(jwtProperties.pTtl());
 
         Map<String, Object> claims = Map.of(
-                "email", Optional.ofNullable(authUser.getIdToken())
-                        .map(id -> id.getClaim("email"))
-                        .orElse("anonymousMail"),
-                "nickname", Optional.ofNullable(authUser.getIdToken())
-                        .map(id -> id.getClaim("nickname"))
-                        .orElse("anonymousNic"),
-                "picture", Optional.ofNullable(authUser.getIdToken())
-                        .map(id -> id.getClaim("picture"))
-                        .orElse("anonymousPic")
+                "pofolit", jwtProperties.iss(),
+                "email", "anonymousMail",
+                "nickname", "anonymousNic",
+                "picture", "anonymousPic"
         );
 
         return Jwts.builder()
-                .subject(Optional.ofNullable(authUser.getIdToken())
-                        .map(id -> (String) id.getClaim("sub"))
-                        .orElse("anonymousSub"))
-                .issuer(jwtProperties.iss())
+                .subject("anonymousSub")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .id(UUID.randomUUID().toString())
-                .audience().add(SecurityLevel.LV0.getAccess()).and()
+                .audience().add(SecurityLevel.LV0.getLv()).and()
                 .claims(claims)
                 .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
@@ -111,9 +102,11 @@ public class TokenUtil {
     public String getJtiForFindRedisId(String token) {
         return validator.parseClaims(token).getId();
     }
+
     public String getSubjectForFindUserProviderId(String token) {
         return validator.parseClaims(token).getSubject();
     }
+
     public Instant getExpForRefreshTokenTtl(String token) {
         return validator.parseClaims(token).getExpiration().toInstant();
     }

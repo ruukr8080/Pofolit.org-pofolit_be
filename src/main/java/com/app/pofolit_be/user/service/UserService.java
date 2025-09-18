@@ -5,15 +5,16 @@ import com.app.pofolit_be.common.exception.ExCode;
 import com.app.pofolit_be.security.authentication.AuthenticatedUser;
 import com.app.pofolit_be.user.dto.SignDto;
 import com.app.pofolit_be.user.dto.SignupRequest;
-import com.app.pofolit_be.user.entity.Role;
 import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.Optional;
+
+import static com.app.pofolit_be.security.SecurityLevel.LV0;
+import static com.app.pofolit_be.security.SecurityLevel.LV1;
 
 /**
  * 사용자 비즈니스 로직입니다.
@@ -52,11 +53,11 @@ public class UserService {
 
     public User updateUser(User user, SignDto signDto) {
         user.updateUser(signDto);
-        if(user.getRole() == null) {
-            user.setRole(Role.GUEST);
+        if(user.getSecurityLevel() == null) {
+            user.setSecurityLevel(LV0);
         }
-        if(user.getRole() == Role.GUEST) {
-            user.setRole(Role.USER);
+        else if (user.getSecurityLevel() == LV0) {
+            user.setSecurityLevel(LV1);
         }
         return user;
     }
@@ -65,36 +66,31 @@ public class UserService {
         return userRepository.save(signDto.toEntity());
     }
 
-    public Optional<User> getUserProviderId(String providerId) {
-        return userRepository.findByProviderId(providerId);
-    }
+
+
     // TODO: 맘에 안드는 메서드. 개선하고싶다.: 필터 통과하는 Authenticate객체를 만들때 최대한 DB접근(userEntity) 안하기, 책임분리 다 위반.
     //  1. DB접근을 하되 엔티티에 providerId만 빼서 oidcUser구현체한테 전달하기 실패.
     //  - 그럼 적어도 DB조회할땐 providerId 말고 user_id로 조회해서 조회시간이라도 줄여보자.
     //  어차피 가입할때 providerId 생성되니까 user_id를providerId로 사용하기. -> 큰일날듯.
     public AuthenticatedUser getAuthenticatedUserFrom(String providerIdFromUserEntity) {
-        User user = getUserProviderId(providerIdFromUserEntity).orElseThrow(()-> new RuntimeException("user not found"));
+        User user = getUserProviderId(providerIdFromUserEntity);
 
-        Map<String, Object> claims = Map.of(
-                "sub", user.getProviderId(),
-                "email", user.getEmail(),
-                "nickname", user.getNickname(),
-                "role", user.getRole().getKey()
-        );
-
-        // AuthenticatedUser의 PreTokenFrom 메서드를 재활용하여 객체 생성
-        return AuthenticatedUser.PreTokenFrom(claims);
+        // 이 시점에는 OidcUser 객체가 없으므로 null을 전달합니다.
+        return AuthenticatedUser.fromUserEntity(user);
     }
-
+    public User getUserProviderId(String providerId) {
+        return userRepository.findByProviderId(providerId);
+    }
     public User getUserById(long id) {
         return userRepository.findUserById(id);
     }
 
     private User userSignup(User user, SignupRequest signupRequest) {
         user.signup(signupRequest);
-        if(user.getRole() == Role.GUEST) {
-            user.setRole(Role.USER);
+        if(user.getSecurityLevel() == LV0) {
+            user.setSecurityLevel(LV1);
         }
         return user;
     }
+
 }

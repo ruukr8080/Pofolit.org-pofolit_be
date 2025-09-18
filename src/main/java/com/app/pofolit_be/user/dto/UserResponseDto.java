@@ -1,5 +1,6 @@
 package com.app.pofolit_be.user.dto;
 
+import com.app.pofolit_be.security.SecurityLevel;
 import com.app.pofolit_be.user.entity.Role;
 import com.app.pofolit_be.user.entity.User;
 import io.jsonwebtoken.Claims;
@@ -23,7 +24,7 @@ public record UserResponseDto(
         LocalDate birthDay,
         String domain,
         String job,
-        Role role
+        SecurityLevel accessLv
 )
 {
     public static UserResponseDto from(User user) {
@@ -33,7 +34,7 @@ public record UserResponseDto(
                 user.getBirthDay(),
                 user.getDomain(),
                 user.getJob(),
-                user.getRole()
+                user.getSecurityLevel()
         );
     }
     public static UserResponseDto fromPreTokenClaims(Claims claims) {
