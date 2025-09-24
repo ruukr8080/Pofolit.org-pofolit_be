@@ -1,20 +1,18 @@
 package com.app.pofolit_be.user.entity;
 
-import com.app.pofolit_be.security.SecurityLevel;
-import com.app.pofolit_be.user.dto.SignDto;
-import com.app.pofolit_be.user.dto.SignupRequest;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+//@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor
 @Getter
 @Table(name = "users",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_user_provider",
-                        columnNames = {"registration_id", "provider_id"}
+                        name = "uk_user_openid",
+                        columnNames = {"provider", "subject"}
                 )
         })
 @Entity
@@ -27,46 +25,32 @@ public class User {
     @Column(unique = true)
     private String email;
     private String nickname;
-    @Column(name = "profile_image_url", length = 355)
-    private String profileImageUrl; // 카카오:110px*110px
-    private LocalDate birthDay;
-    private String job;
-    private String domain;
-
-    private String providerId;
-    private String registrationId;
-
-//    @Setter
-//    @Enumerated(EnumType.STRING)
-//    private Role role;
-
-    @Setter
+    private String avatar; // 카카오:110px*110px
+    private String provider; // 구글,카카오
+    private String subject;
     @Getter
     @Enumerated(EnumType.STRING)
-    private SecurityLevel securityLevel;
-
+    private Role access;
 
     @Builder
-    public User(String email, String nickname, String profileImageUrl, String providerId,
-                String registrationId, SecurityLevel securityLevel) {
+    public User(String email, String nickname, String avatar,
+                String provider, String subject, Role access) {
         this.email = email;
         this.nickname = nickname;
-        this.profileImageUrl = profileImageUrl;
-        this.providerId = providerId;
-        this.registrationId = registrationId;
-        this.securityLevel = securityLevel;
+        this.avatar = avatar;
+        this.provider = provider;
+        this.subject = subject;
+        this.access = access != null ? access : Role.LV0;
     }
 
-    public void updateUser(SignDto signDto) {
-        this.nickname = signDto.nickname();
-        this.profileImageUrl = signDto.profileImageUrl();
+    public void completeSignup(String nickname, String avatar) {
+        this.nickname = nickname;
+        this.avatar = avatar;
+        this.access = Role.LV1;
     }
 
-    public void signup(SignupRequest request) {
-        this.nickname = request.nickname();
-        this.birthDay = request.birthDay();
-        this.domain = request.domain();
-        this.job = request.job();
-        this.securityLevel = SecurityLevel.fromLv(securityLevel.getLv());
+    public void updateProfile(String nickname, String avatar) {
+        this.nickname = nickname;
+        this.avatar = avatar;
     }
 }

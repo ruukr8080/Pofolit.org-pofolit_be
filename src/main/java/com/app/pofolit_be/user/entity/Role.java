@@ -1,33 +1,27 @@
 package com.app.pofolit_be.user.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-import java.util.Arrays;
-
+@Getter
+@AllArgsConstructor
 public enum Role {
-    GUEST("ROLE_GUEST", "미가입자"),
-    USER("ROLE_USER", "가입자"),
-    ADMIN("ROLE_ADMIN", "관리자");
+    LV0("Lv0", "회원가입페이지 접근 가능", "최초 로그인"),
+    LV1("Lv1", "일반 유저", "가입 이후 로그인함."),
+    LV2("Lv2", "관리자", "관리자. 읽기 쓰기 수정"),
+    LV3("Lv3", "사업자", "비지니스페이지 열람"),
+    SYSTEM("SYSTEM", "서버 내부 통신용", "개발자");
 
-    private final String key;
-    private final String title;
+    private final String lv;
+    private final String access;
+    private final String description;
 
-    Role(String key, String title) {
-        this.key = key;
-        this.title = title;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public static Role of(String key) {
-        return Arrays.stream(Role.values())
-                .filter(r -> r.getKey().equals(key))
-                .findAny()
-                .orElse(GUEST);
+    public static Role access(String lv) {
+        for (Role level : values()) {
+            if(level.access.equalsIgnoreCase(lv)) {
+                return level;
+            }
+        }
+        throw new IllegalArgumentException("접근 권한입없습니다.: " + lv);
     }
 }
