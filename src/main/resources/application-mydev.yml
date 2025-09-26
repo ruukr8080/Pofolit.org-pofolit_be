@@ -1,28 +1,23 @@
-uri:
-  auth:
-    base: "http://localhost:3000/auth/callback"
-    signup: "http://localhost:3000/signup"
-server:
-  port: 8080
-logging:
-  level:
-    root: info # TRACE < DEBUG < INFO < WARN < ERROR
-    org.hibernate.orm: WARN
 spring:
   config:
-    import: optional:classpath:.env[.properties] # 개발 단계에서 쓰는 환경변수. !배포 시 "classpath-> file"
+    import:
+      - optional:classpath:.env[.properties] # 개발 단계에서 쓰는 환경변수. !배포 시 "classpath-> file"
+
   data:
-    redis:
-      host: ${REDIS_HOST:127.0.0.1}
+    redis: # docker run --name pofolit-redis7.0 -d -p 6379:6379 redis:7.0
+      host: ${REDIS_HOST:127.0.0.1} # 127.0.0.1
       port: ${REDIS_PORT:6379}
       database: 0
-      timeout: 2000ms
+      timeout: 500ms
+      key-prefix: "RT:"
       lettuce:
         pool:
           max-active: 2
           max-wait: -1ms
           max-idle: 3
           min-idle: 0
+        client:
+          protocol-version: RESP3
   datasource:
     #    url: jdbc:h2:mem:testdb # H2 in memory db
     url: jdbc:h2:file:/h2/pofolitdb;AUTO_SERVER=TRUE
@@ -30,7 +25,7 @@ spring:
     username: sa
     password:
   jpa:
-    hibernate.ddl-auto: create #
+    hibernate.ddl-auto: update #
     properties.hibernate.format_sql: true
     open-in-view: false
   h2:
@@ -42,54 +37,58 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     clean-disabled: true
-  jwt:
-    key-size: 2048 # 1024 3078
-    iss: pofolit
-    p-ttl: ${PRE_TOKEN_TTL:1800}
-    a-ttl: ${ACCESS_TOKEN_TTL:1800}
-    r-ttl: ${REFRESH_TOKEN_TTL:604800}
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID:}
-            client-secret: ${GOOGLE_CLIENT_SECRET:}
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope:
-              - openid
-              - email
-              - profile
-          kakao:
-            client-id: ${KAKAO_CLIENT_ID:}
-            client-secret: ${KAKAO_CLIENT_SECRET:}
-            client-authentication-method: client_secret_post
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope:
-              - openid
-            client-name: kakao
-        provider:
-          kakao:
-            issuer-uri: https://kauth.kakao.com
-          google:
-            # 배포시 authorization-uri에서 access_type=offline 파라미터 제거
-            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline
-            token-uri: https://oauth2.googleapis.com/token
-            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-            user-name-attribute: sub
 
-exclude:
-  path:
-    exception:
-      - /v3/api-docs
-      - /swagger-ui/**
-    filter:
-      - /health
-      - /error
-      - /login/**
-      - /signup/**
-      - /v3/api-docs/**
-      - /swagger-ui/**
-      - /swagger-resource/**
-    baseline-on-migrate: true
-    clean-disabled: true
+security:
+  oauth2:
+    client:
+      registration:
+        google:
+          client-id: ${GOOGLE_CLIENT_ID}
+          client-secret: ${GOOGLE_CLIENT_SECRET}
+          client-authentication-method: client_secret_basic
+          authorization-grant-type: authorization_code
+          redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          scope:
+            - openid
+            - email
+            - profile
+            - offline_access
+        kakao:
+          client-id: ${KAKAO_CLIENT_ID}
+          client-secret: ${KAKAO_CLIENT_SECRET}
+          client-authentication-method: client_secret_post
+          authorization-grant-type: authorization_code
+          redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          scope:
+            - openid
+            - profile
+            - account_email
+            - offline_access
+          client-name: kakao
+      provider:
+        google:
+          authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+          token-uri: https://oauth2.googleapis.com/token
+          user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+          user-name-attribute: sub
+        kakao:
+          issuer-uri: https://kauth.kakao.com
+          jwk-set-uri: https://kauth.kakao.com/.well-known/jwks.json
+          authorization-uri: https://kauth.kakao.com/oauth/authorize
+          token-uri: https://kauth.kakao.com/oauth/token
+          user-info-uri: https://kapi.kakao.com/v2/user/me
+          user-name-attribute: id
+jwt:
+  issuer: pofolit
+  access-token-exp: 1800
+  refresh-token-exp: 604800
+uri:
+  auth:
+    base: "http://localhost:3000/"
+    signup: "http://localhost:3000/signup"
+server:
+  port: 8080
+logging:
+  level:
+    root: info # TRACE < DEBUG < INFO < WARN < ERROR
+    org.hibernate.orm: WARN

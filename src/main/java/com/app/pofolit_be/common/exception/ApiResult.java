@@ -1,4 +1,4 @@
-package com.app.pofolit_be.common;
+package com.app.pofolit_be.common.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -50,14 +50,6 @@ public class ApiResult<T> {
         this.data = null;
     }
 
-    /**
-     * 성공 응답을 생성합니다.
-     *
-     * @param message 응답 메시지
-     * @param data 응답 데이터
-     * @return ApiResult 인스턴스
-     * @param <T> 데이터 타입
-     */
     public static <T> ApiResult<T> success(String message, T data) {
         return new ApiResult<>(200, message, data);
     }

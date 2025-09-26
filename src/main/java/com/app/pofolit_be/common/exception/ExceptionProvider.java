@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public class CustomException extends RuntimeException implements ExCodeException {
+public class ExceptionProvider extends RuntimeException implements ExCodeException {
 
     private final ExCode exCode;
 

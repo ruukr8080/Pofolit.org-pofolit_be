@@ -42,12 +42,6 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     clean-disabled: true
-  jwt:
-    key-size: 1024
-    iss: pofolit
-    p-ttl: ${PRE_TOKEN_TTL:1800}
-    a-ttl: ${ACCESS_TOKEN_TTL:1800}
-    r-ttl: ${REFRESH_TOKEN_TTL:604800}
   security:
     oauth2:
       client:
@@ -73,23 +67,12 @@ spring:
             issuer-uri: https://kauth.kakao.com
           google:
             # 배포시 authorization-uri에서 access_type=offline 파라미터 제거
-            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?access_type
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
 
-exclude:
-  path:
-    exception:
-      - /v3/api-docs
-      - /swagger-ui/**
-    filter:
-      - /health
-      - /error
-      - /login/**
-      - /signup/**
-      - /v3/api-docs/**
-      - /swagger-ui/**
-      - /swagger-resource/**
-    baseline-on-migrate: true
-    clean-disabled: true
+jwt:
+  issuer:  pofolit
+  access-token-exp: 1800
+  refresh-token-exp: 604800

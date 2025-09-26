@@ -12,7 +12,6 @@ public record UserDto(
         Role access
 )
 {
-    // 최초 소셜로그인시.
     public User toUser() {
         return User.builder()
                 .email(email)
@@ -23,7 +22,7 @@ public record UserDto(
                 .access(Role.LV0)
                 .build();
     }
-    // 최초 가입폼 제출시.
+
     public void signupUser(User user) {
         user.completeSignup(nickname, avatar);
     }
