@@ -1,141 +1,103 @@
 package com.app.pofolit_be.security.service;
 
-import com.app.pofolit_be.security.SecurityLevel;
-import com.app.pofolit_be.security.authentication.AuthenticatedUser;
-import com.app.pofolit_be.security.config.JwtProperties;
-import com.app.pofolit_be.security.token.CookieUtil;
-import com.app.pofolit_be.security.token.RedisUtil;
-import com.app.pofolit_be.security.token.TokenUtil;
-import com.app.pofolit_be.security.token.TokenValidator;
+import com.app.pofolit_be.security.dto.TokenPair;
+import com.app.pofolit_be.security.dto.TokenProperties;
+import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.service.UserService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.security.SignatureException;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseCookie;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final TokenUtil tokenUtil;
-    private final TokenValidator validator;
-    private final RedisUtil redisUtil;
-    private final CookieUtil cookieUtil;
+    private static final String REFRESH_KEY_PREFIX = "RT:";
+    private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
+    private final StringRedisTemplate redisTemplate;
+    private final TokenProperties tokenProperties;
     private final UserService userService;
-    private final JwtProperties jwtProperties;
-    public SecurityLevel securityLevel;
 
-    public void issuePreToken(HttpServletResponse response) {
-        String preToken = tokenUtil.generatePreToken();
-        ResponseCookie cookie = ResponseCookie.from("pre", preToken)
-                .httpOnly(false)
-                .secure(false)
-                .sameSite("Strict")
-                .path("/")
-                .maxAge(jwtProperties.pTtl())
+    public TokenPair issueTokenPair(User user) {
+        Instant now = Instant.now();
+        Instant accessExp = now.plusSeconds(tokenProperties.getAccessTokenExp());
+        Instant refreshExp = now.plusSeconds(tokenProperties.getRefreshTokenExp());
+
+        String accessJti = UUID.randomUUID().toString();
+        String refreshJti = UUID.randomUUID().toString();
+
+        JwtClaimsSet accessClaims = JwtClaimsSet.builder()
+                .issuer(tokenProperties.getIssuer())
+                .issuedAt(now)
+                .expiresAt(accessExp)
+                .subject(user.getId().toString())
+                .claim("role", user.getAccess() != null ? user.getAccess().name() : "LV0")
+                .id(accessJti)
                 .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-    }
+        String accessToken = jwtEncoder.encode(
+                JwtEncoderParameters.from(JwsHeader.with(() -> "RS256").build(), accessClaims)
+        ).getTokenValue();
 
-    public Map<String, ResponseCookie> issuePairTokens(AuthenticatedUser authUser) {
-        // IdToken만 들어옴.
-
-        authUser.getIdToken().getClaims();
-        String accessToken = tokenUtil.generateAccessToken(authUser, securityLevel);
-        String refreshToken = tokenUtil.generateRefreshToken(authUser, securityLevel);
-        Map<String, ResponseCookie> cookies = new HashMap<>();
-
-        cookies.put("accessToken", cookieUtil.createCookie("accessToken", accessToken, false, 60 * 60));
-        cookies.put("refreshToken", cookieUtil.createCookie("refreshToken", refreshToken, true, 604800));
-
-        return cookies;
-    }
-
-    public Authentication createAuthentication(String token) {
-        Claims claims = validator.parseClaims(token);
-        String sub = claims.getSubject();
-        String role = claims.get("aud", String.class);
-        Collection<? extends GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
-
-        return new UsernamePasswordAuthenticationToken(sub, null, authorities);
-    }
-
-    public void logout(String sub, String jti, HttpServletResponse response) {
-        redisUtil.deleteRT(sub, jti);
-        ResponseCookie deleteRefreshCookie = ResponseCookie.from("refreshToken", "")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
+        JwtClaimsSet refreshClaims = JwtClaimsSet.builder()
+                .issuer(tokenProperties.getIssuer())
+                .issuedAt(now)
+                .expiresAt(refreshExp)
+                .subject(user.getId().toString())
+                .id(refreshJti)
                 .build();
-        response.addHeader("Set-Cookie", deleteRefreshCookie.toString());
-    }
+        String refreshToken = jwtEncoder.encode(
+                JwtEncoderParameters.from(JwsHeader.with(() -> "RS256").build(), refreshClaims)
+        ).getTokenValue();
 
-    public Map<String, String> refreshAccessToken(String refreshToken) {
-        int tempDay = 10 * 24 * 60 * 60;
-        try {
-            validator.validateToken(refreshToken);
-
-            String subFromRequest = tokenUtil.getSubjectForFindUserProviderId(refreshToken);
-            String jtiFromRequest = tokenUtil.getJtiForFindRedisId(refreshToken);
-            String redisRefToken = redisUtil.getRT(subFromRequest, jtiFromRequest);
-            if(redisRefToken == null) {
-                throw new RuntimeException("accessToken 재발급하려는데 레디스에 없습니다.만료돼서 자동삭제 됐을수도 있습니다.");
-            }
-            // TODO: 조건부 갱신 구현하기.
-            //  - 엑세스토큰 재발급 시 리프레시 토큰 유효기간(임계값)이 10일 미만정도 ?
-            //  [ture] 리프레시토큰 기존꺼 지우고 새로갱신.
-            //  : [false] 리프레시토큰은 유지. or 리프레시토큰 ttl클레임만 초기화(의미없을듯). or
-            //        AuthenticatedUser test = (AuthenticatedUser) createAuthentication(redisRefToken);
-            AuthenticatedUser authUser = userService.getAuthenticatedUserFrom(subFromRequest);
-            String newAccessToken = tokenUtil.generateAccessToken(authUser, securityLevel);
-            Instant refExpInstant = tokenUtil.getExpForRefreshTokenTtl(refreshToken);
-            Instant now = Instant.now();
-            Duration remainingDuration = Duration.between(now, refExpInstant);
-
-            Map<String, String> tokens = new HashMap<>();
-
-            if(remainingDuration.toDays() < tempDay) {
-                String newRefreshToken = tokenUtil.generateRefreshToken(authUser, securityLevel);
-                redisUtil.deleteRT(subFromRequest, jtiFromRequest);
-                redisUtil.setRT(subFromRequest, jtiFromRequest, newRefreshToken, jwtProperties.rTtl());
-                tokens.put("accessToken", newAccessToken);
-                tokens.put("refreshToken", newRefreshToken);
-            } else {
-                tokens.put("accessToken", newAccessToken);
-                tokens.put("refreshToken", refreshToken); // 기존꺼유지
-                return tokens;
-            }
-            return tokens;
-        } catch (ExpiredJwtException e) {
-            log.warn("Refresh Token 만료: {}", e.getMessage());
-            throw new RuntimeException("refreshToken이 만료되었습니다.");
-        } catch (SignatureException e) {
-            log.warn("서명이 유효하지 않거나 위조되었습니다.: {}", e.getMessage());
-            throw new RuntimeException("refreshToken 위조");
-        } catch (MalformedJwtException |
-                 UnsupportedJwtException |
-                 IllegalArgumentException e) {
-            log.error("지원하지 않는 형식입니다.: {}", e.getMessage());
-            throw new RuntimeException("refreshToken 형식이 올바르지 않습니다.");
+        String redisKey = REFRESH_KEY_PREFIX + user.getId() + ":" + refreshJti;  // 0.RT:1:3a551397-d469-442a-ac3b-210f3a5dc225
+        long ttl = tokenProperties.getRefreshTokenExp();
+        if(ttl > 0) {
+            redisTemplate.opsForValue().set(redisKey, "0", java.time.Duration.ofSeconds(tokenProperties.getRefreshTokenExp()));
         }
 
+        return new TokenPair(accessToken, refreshToken);
+    }
+
+    public TokenPair refreshAccessToken(String refreshToken) {
+        // 리프레시 토큰 디코딩. 여기서 서명/형식/만료시간 1차 검증.
+        Jwt decoded = jwtDecoder.decode(refreshToken);
+        String refreshJti = decoded.getId();
+        String subject = decoded.getSubject();
+
+        if(refreshJti == null || subject == null) {
+            // 토큰에 jti나 subject 클레임이 없울 경우ㅜ.
+            throw new BadJwtException("Refresh token is missing required claims (jti or sub).");
+        }
+        String redisKey = REFRESH_KEY_PREFIX + subject + ":" + refreshJti;
+        String existed = redisTemplate.opsForValue().getAndDelete(redisKey);
+
+        if(existed == null) {
+            // Redis에 토큰이 없으면 이미 썼거나(재사용), 만료돼서 사라진 거.
+            revokeAllRefreshTokensForUser(subject);
+            throw new BadJwtException("Refresh token reuse detected or expired. All sessions are revoked.");
+        }
+
+        User user = userService.findById(Long.valueOf(subject))
+                .orElseThrow(() -> new RuntimeException("UserNotFound: " + subject));
+        return issueTokenPair(user);
+    }
+
+    // 조회한 사용자 id로 만든 RefreshToken Redis에서 다 삭제
+    private void revokeAllRefreshTokensForUser(String userId) {
+        Set<String> keys = redisTemplate.keys(REFRESH_KEY_PREFIX + userId + ":*");
+        if(!keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
+
+    // RefreshToken.exp 반환.
+    public long getRefreshTokenExpirySeconds() {
+        return tokenProperties.getRefreshTokenExp();
     }
 }
