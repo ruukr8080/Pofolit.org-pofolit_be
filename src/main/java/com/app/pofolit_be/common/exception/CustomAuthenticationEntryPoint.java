@@ -1,4 +1,4 @@
-package com.app.pofolit_be.security.util;
+package com.app.pofolit_be.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

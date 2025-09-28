@@ -1,9 +1,8 @@
-package com.app.pofolit_be.security;
+package com.app.pofolit_be.security.config;
 
-import com.app.pofolit_be.security.config.AuthenticationFilter;
+import com.app.pofolit_be.common.exception.CustomAccessDeniedHandler;
+import com.app.pofolit_be.common.exception.CustomAuthenticationEntryPoint;
 import com.app.pofolit_be.security.service.SignService;
-import com.app.pofolit_be.security.util.CustomAccessDeniedHandler;
-import com.app.pofolit_be.security.util.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

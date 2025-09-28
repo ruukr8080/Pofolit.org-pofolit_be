@@ -9,9 +9,20 @@ public record UserDto(
         String avatar,
         String provider,
         String subject,
-        Role access
+        String access
 )
 {
+    public static UserDto toUser(User user) {
+        return new UserDto(
+                user.getEmail(),
+                user.getNickname(),
+                user.getAvatar(),
+                user.getProvider(),
+                user.getSubject(),
+                user.getAccess().getLv()
+        );
+    }
+
     public User toUser() {
         return User.builder()
                 .email(email)

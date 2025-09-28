@@ -52,10 +52,10 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
         // 5. Authentication 객체 생성 (Stateless 인증)
         // JWT는 상태 비저장이므로 UserDetails 객체 대신 클레임 정보만 담습니다.
+        // principal과 authorities를 받는 생성자를 사용해야 isAuthenticated()가 true로 설정됨.
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         userId, // principal identifier (사용자 식별자)
-                        null,   // credentials
                         authorities
                 );
         return authentication;
@@ -66,12 +66,13 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // 1. Authorization 헤더에서 Access Token 추출
+        // 1. Authorization 헤더에서 AccessToken 추출
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         String token = null;
 
         if(authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
+            log.info("Bearer토큰 필터에서 추출할 때 [{}]", authHeader);
         }
 
         if(token == null) {
@@ -100,7 +101,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             // SecurityContext를 비우고 (혹시 모를 잔여 상태 방지) 다음 필터로 진행
             SecurityContextHolder.clearContext();
 
-            // API 서버는 401 Unauthorized를 반환해야 하며, 이는 SecurityConfig의 ExceptionHandler에서 처리될 수 있습니다 [9, 10].
+            // API 서버는 401 Unauthorized를 반환해야 하며, 이는 SecurityConfig의 ExceptionHandler에서 처리될 수 있습니다
             // 이 필터에서는 오류를 던지지 않고, 컨텍스트를 비운 채 진행하여 인증 실패로 처리되게 합니다.
         }
 
@@ -112,9 +113,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         // `permitAll`로 지정된 경로는 SecurityConfig에서 처리하므로,
         // 이 필터는 모든 요청을 일단 검사하도록 설정하는 것이 더 명확함.
         // 토큰이 없는 요청은 doFilterInternal 내부에서 알아서 다음 필터로 넘어감.
-        // return excludePaths.stream()
-        //         .anyMatch(path -> pathMatcher.match(path, request.getServletPath()));
-        return false;
+        return excludePaths.stream()
+                .anyMatch(path -> pathMatcher.match(path, request.getServletPath()));
+        //        return false;
     }
 
 }

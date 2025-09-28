@@ -46,7 +46,7 @@ public class SignService extends OidcUserService implements AuthenticationSucces
                 oidcUser.getEmail(),
                 oidcUser.getNickName(),
                 oidcUser.getPicture(),
-                provider,
+                provider.substring(provider.lastIndexOf("/") + 1),
                 subject,
                 null
         );

@@ -15,7 +15,7 @@ public class OIDCUser extends DefaultOidcUser {
 
     public OIDCUser(Collection<? extends GrantedAuthority> authorities,
                     OidcIdToken idToken,
-                    OidcUserInfo userInfoMabeNull,
+                    OidcUserInfo userInfoMaybeNull,
                     String nameAttributeKey,
                     User user) {
         super(authorities, idToken, null, nameAttributeKey);
