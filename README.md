@@ -1,16 +1,20 @@
 ### 개발 환경 (Development Environment)
+
 > backend port : http://localhost:8080/  
 > frontend port : http://localhost:3000/
-- **Java 17**, **Spring Boot 3.5.4** , **Gradle-jar**
+
+- **Java 17**, **Spring Boot 3.5.4**, **Gradle-jar
+  **
 - IDE: **IntelliJ IDEA**
 - Management process: **Notion** _sprint_style_
-- Database: { **MySQL** }
-- CI/CD: { **Jenkins**, **Docker** } 
+- Database: **MySQL**, **H2** , **redis(RESP3)**
+- CI/CD: **Jenkins** , **Docker**
 - Dependencies:
-  - JPA , mapstruct , flyway-core 
-  - Spring-Security ,  JWT 12.6 , OAuth2: _kakao,google_
-  - JUnit , Mockito
-  - Swagger-ui
+    - JPA , flyway-core
+    - Spring-Security , nimbus-jose-jwt:10.4.2 ,
+      OAuth2: _kakao,google_
+    - JUnit , Mockito
+    - Swagger-ui
 - 패키지 구조
     ```txt
    └─pofolit_be
@@ -24,32 +28,46 @@
        │  └─utils
        │          ResponseUtil.java
        │
-       ├─security
-       │  └─auth
-       │      │  OAuth2AuthSuccessHandler.java
-       │      │  SecurityConfig.java
-       │      │
-       │      └─jwt
-       │              JwtFilter.java
-       │              JwtUtil.java
+       ├─security/
+       │  ├─config/
+       │  │      AuthenticationFilter.java
+       │  │      CorsConfig.java
+       │  │      SecurityConfig.java
+       │  │      RSAkeyConfig.java
+       │  │
+       │  ├─controller/
+       │  │      AuthController.java
+       │  │      TokenPair.java
+       │  │
+       │  ├─dto/
+       │  │      OIDCUser.java
+       │  │      TokenPair.java
+       │  │      TokenProperties.java
+       │  │
+       │  ├─service/
+       │  │      AuthService.java
+       │  │      SignService.java
+       │  │
+       │  └─util/
+       │         ForensicUtil.java
        │
-       └─user
-           ├─dto
-           │  │  CustomUserDetails.java
-           │  │  OAuth2UserDto.java
-           │  │
-           │  └─converter
-           │          Google.java
-           │          Kakao.java
-           │          OAuth2Converter.java
-           │
-           ├─entity
-           │      Role.java
-           │      User.java
-           │
-           ├─repository
-           │      UserRepository.java
-           │
-           └─service
-                  OAuth2UserService.java
+       ├─user/
+       │  ├─controller/
+       │  │    UserController.java
+       │  │
+       │  ├─dto/
+       │  │    UserDto.java
+       │  │
+       │  ├─entity/
+       │  │    Role.java
+       │  │    User.java
+       │  │
+       │  ├─repository/
+       │  │    UserRepository.java
+       │  │
+       │  └─service/
+       │       UserService.java
+       │
+       └─PofolitBeApplication.java
+  
    ```
