@@ -1,7 +1,7 @@
 package com.app.pofolit_be.security.service;
 
 import com.app.pofolit_be.security.dto.OIDCUser;
-import com.app.pofolit_be.security.dto.TokenPair;
+import com.app.pofolit_be.security.dto.TokenProperties;
 import com.app.pofolit_be.user.dto.UserDto;
 import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.service.UserService;
@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 
@@ -29,13 +30,14 @@ import java.io.IOException;
 public class SignService extends OidcUserService implements AuthenticationSuccessHandler {
 
     @Lazy
-    private final AuthService tokenService;
-
+    private final TokenService tokenService;
     private final UserService userService;
+    private final TokenProperties tokenProperties;
     @Value("${uri.auth.base}")
     String target; // 3000
 
     @Override
+    @Transactional
     public OidcUser loadUser(OidcUserRequest oidcUserRequest) throws OAuth2AuthenticationException {
         OidcUser oidcUser = super.loadUser(oidcUserRequest);
         String provider = oidcUser.getIssuer().toString();
@@ -46,17 +48,17 @@ public class SignService extends OidcUserService implements AuthenticationSucces
                 oidcUser.getEmail(),
                 oidcUser.getNickName(),
                 oidcUser.getPicture(),
-                provider.substring(provider.lastIndexOf("/") + 1),
+                provider,
                 subject,
-                null
+                "Lv0"
         );
 
-        User user = userService.getUserByProvider(provider, subject);
+        User user = userService.getUserBySubject(subject);
 
         if(user == null) {
             user = userService.createUser(signedUser);
         } else {
-            user = userService.updateProfile(user, signedUser);
+            user.updateProfile(signedUser.nickname(), signedUser.avatar());
         }
 
         return new OIDCUser(
@@ -75,13 +77,12 @@ public class SignService extends OidcUserService implements AuthenticationSucces
         OIDCUser oidcUser = (OIDCUser) authentication.getPrincipal();
         User user = oidcUser.getUser();
 
-        TokenPair internalTokens = tokenService.issueTokenPair(user);
-        long refreshExpSeconds = tokenService.getRefreshTokenExpirySeconds();
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", internalTokens.refreshToken())
+        String refreshToken = tokenService.issueAndStoreRefreshToken(user);
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .maxAge(refreshExpSeconds)
+                .maxAge(tokenProperties.getRefreshTokenExp())
                 .sameSite("None")
                 .build();
 

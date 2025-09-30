@@ -12,26 +12,24 @@ public record UserDto(
         String access
 )
 {
-    public static UserDto toUser(User user) {
+    public static UserDto from(User user) {
         return new UserDto(
                 user.getEmail(),
                 user.getNickname(),
                 user.getAvatar(),
                 user.getProvider(),
                 user.getSubject(),
-                user.getAccess().getLv()
-        );
+                user.getAccess().getLv());
     }
 
-    public User toUser() {
+    public User toEntity() {
         return User.builder()
                 .email(email)
                 .nickname(nickname)
                 .avatar(avatar)
                 .provider(provider)
                 .subject(subject)
-                .access(Role.LV0)
-                .build();
+                .access(access == null ? Role.LV0 : Role.access(access)).build();
     }
 
     public void signupUser(User user) {

@@ -52,5 +52,8 @@ public class User {
     public void updateProfile(String nickname, String avatar) {
         this.nickname = nickname;
         this.avatar = avatar;
+        if(this.access == Role.LV0) {
+            this.access = Role.LV1;
+        }
     }
 }

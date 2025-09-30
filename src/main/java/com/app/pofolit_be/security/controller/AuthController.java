@@ -1,64 +1,41 @@
 package com.app.pofolit_be.security.controller;
 
-import com.app.pofolit_be.security.dto.TokenPair;
-import com.app.pofolit_be.security.service.AuthService;
-import jakarta.servlet.http.HttpServletResponse;
+import com.app.pofolit_be.security.dto.TokenProperties;
+import com.app.pofolit_be.security.service.TokenService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
+import java.util.Map;
+
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService tokenService;
+    private final TokenService authService;
+    private final TokenProperties tokenProperties;
 
     @PostMapping("/refresh")
-    public ResponseEntity<TokenPair> refresh(
-            @CookieValue(value = "refreshToken", required = false) String refreshToken,
-            HttpServletResponse response
-    ) {
-        log.info("/api/v1/auth/refresh [@PostMapping] [{}]", refreshToken);
-        if(refreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<Map<String, String>> refresh(
+            @CookieValue("refreshToken") String refreshToken) {
 
-        try {
-            TokenPair newTokenPair = tokenService.refreshAccessToken(refreshToken);
-            long refreshExpSeconds = tokenService.getRefreshTokenExpirySeconds();
-            ResponseCookie newRefreshTokenCookie = ResponseCookie.from("refreshToken", newTokenPair.refreshToken())
-                    .httpOnly(true)
-                    .secure(true)
-                    .path("/")
-                    .maxAge(refreshExpSeconds)
-                    .sameSite("None") // CORS 환경 고려
-                    .build();
+        Map<String, String> tokens = authService.refreshAccessToken(refreshToken);
 
-            response.addHeader("Set-Cookie", newRefreshTokenCookie.toString());
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokens.get("refreshToken"))
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(tokenProperties.getRefreshTokenExp())
+                .sameSite("None")
+                .build();
 
-            return ResponseEntity.ok(newTokenPair);
-
-        } catch (JwtException e) {
-            log.warn("리프레시토큰 검증 실패. {}", e.getMessage());
-            ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "0")
-                    .maxAge(0)
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .sameSite("None")
-                    .build();
-            response.addHeader("Set-Cookie", expiredCookie.toString());
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(Map.of("accessToken", tokens.get("accessToken")));
     }
 }

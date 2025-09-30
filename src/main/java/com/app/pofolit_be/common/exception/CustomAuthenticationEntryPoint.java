@@ -33,6 +33,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                 authException.getMessage() != null ? authException.getMessage() : "인증 가능한 토큰이 헤더에 없습니다.");
 
         response.getWriter().write(message);
-        log.warn("인증 안됨: URI={}, Error={}", request.getRequestURI(), authException.getMessage());
+        //        log.warn("인증 안됨: URI={}, Error={}", request.getRequestURI(), authException.getMessage());
     }
 }

@@ -16,8 +16,8 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public User getUserByProvider(String provider, String subject) {
-        return userRepository.findByProviderAndSubject(provider, subject)
+    public User getUserBySubject(String subject) {
+        return userRepository.findBySubject(subject)
                 .orElse(null);
     }
 
@@ -32,8 +32,8 @@ public class UserService {
 
     @Transactional
     public User createUser(UserDto dto) {
-        User newUser = dto.toUser();
-        return userRepository.save(newUser);
+        User user = dto.toEntity();
+        return userRepository.save(user);
     }
 
     @Transactional

@@ -18,7 +18,7 @@ public enum Role {
 
     public static Role access(String lv) {
         for (Role level : values()) {
-            if(level.access.equalsIgnoreCase(lv)) {
+            if(level.lv.equalsIgnoreCase(lv)) {
                 return level;
             }
         }

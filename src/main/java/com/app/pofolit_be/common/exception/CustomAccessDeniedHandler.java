@@ -28,7 +28,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication(); // AuthenticationContext 에서 인증 정보 추출하고 로깅
         if(auth != null) {
-            log.warn("접근 거부된 자: {} 접근 경로: {}",
+            log.warn("\n접근 거부된 사용자 ID: [{}] \n접근 경로: {}",
                     auth.getName(), request.getRequestURI()); // (auth.getName() == User ID) 접근이 거부된 사용자 로깅.
         }
         // OAuth 2.1 보안 권장 사항에 따라 권한 부족 오류는 403 Forbidden을 반환.

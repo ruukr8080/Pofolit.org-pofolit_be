@@ -5,14 +5,18 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-@Setter
+import java.time.Duration;
+
 @Getter
+@Setter
 @Component
-@ConfigurationProperties(prefix = "jwt")
+@ConfigurationProperties(prefix = "token")
 public class TokenProperties {
 
     private String issuer;
-    private long accessTokenExp;
-    private long refreshTokenExp;
-}
+    private String signingAlgorithm;
+    private String secret;
+    private Duration accessTokenExp;
+    private Duration refreshTokenExp;
 
+}

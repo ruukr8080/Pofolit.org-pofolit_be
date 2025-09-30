@@ -1,28 +1,22 @@
-uri:
-  auth:
-    base: "http://localhost:3000/auth/callback"
-    signup: "http://localhost:3000/signup"
-server:
-  port: 8080
-logging:
-  level:
-    root: info # TRACE < DEBUG < INFO < WARN < ERROR
-    org.hibernate.orm: WARN
 spring:
   config:
-    import: optional:classpath:.env[.properties] # !배포 시 "classpath-> file"
+    import:
+      - optional:classpath:.env[.properties] # 개발 단계에서 쓰는 환경변수. !배포 시 "classpath-> file"
+
   data:
-    redis:
-      host: ${REDIS_HOST:127.0.0.1}
+    redis: # docker run --name pofolit-redis7.0 -d -p 6379:6379 redis:7.0 # docker exec -it pofolit-redis redis-cli
+      host: ${REDIS_HOST:127.0.0.1} # 127.0.0.1
       port: ${REDIS_PORT:6379}
       database: 0
-      timeout: 2000ms
+      timeout: 500ms
       lettuce:
         pool:
           max-active: 2
           max-wait: -1ms
           max-idle: 3
           min-idle: 0
+        client:
+          protocol-version: RESP3
   datasource:
     #    url: jdbc:h2:mem:testdb # H2 in memory db
     url: jdbc:h2:file:/h2/pofolitdb;AUTO_SERVER=TRUE
@@ -42,37 +36,71 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     clean-disabled: true
+
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID:}
-            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
               - openid
               - email
               - profile
+            client-name: google
           kakao:
-            client-id: ${KAKAO_CLIENT_ID:}
-            client-secret: ${KAKAO_CLIENT_SECRET:}
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
               - openid
+              - profile_nickname #  profile_nickname
+              - account_email
             client-name: kakao
         provider:
-          kakao:
-            issuer-uri: https://kauth.kakao.com
           google:
-            # 배포시 authorization-uri에서 access_type=offline 파라미터 제거
-            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?access_type
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: sub
+            jwk-set-uri: https://kauth.kakao.com/.well-known/jwks.json # ID 토큰 서명 검증용 공개키 목록 주소.
+  cors:
+    allowed-origins: http://localhost:3000
+    allowed-methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
+    allowed-headers: Authorization, Content-Type, X-Requested-With
+    allow-credentials: true
+    max-age: 3600 # Pre-flight 캐싱 시간
+token:
+  issuer: pofolit
+  signing-algorithm: HS256
+  secret: ${SECRET_KEY:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
+  access-token-exp: 30m
+  refresh-token-exp: 7d
 
-jwt:
-  issuer:  pofolit
-  access-token-exp: 1800
-  refresh-token-exp: 604800
+
+uri:
+  auth:
+    base: "http://localhost:3000/"
+server:
+  port: 8080
+logging:
+  level:
+    root: info # TRACE < DEBUG < INFO < WARN < ERROR
+    org.hibernate.orm: warn
+    org.springframework.security: warn
+    org.springframework.data.redis: warn
+    com.app.pofolit_be.common.exception.CustomAccessDeniedHandler: warn
+    com.app.pofolit_be.common.exception.CustomAuthenticationEntryPoint: warn
+    org.springframework.web.filter: warn
+    org.yaml: warn

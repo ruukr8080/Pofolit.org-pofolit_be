@@ -1,5 +1,6 @@
 package com.app.pofolit_be.user.controller;
 
+import com.app.pofolit_be.user.dto.ProfileDto;
 import com.app.pofolit_be.user.dto.UserDto;
 import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.service.UserService;
@@ -20,17 +21,17 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('LV1') or hasRole('LV0')")
-    public ResponseEntity<UserDto> getMyInfo(Authentication authentication) {
-        // AuthenticationFilter에서 Principal에 userId(String)를 넣어줬음
-        String userId = authentication.getName(); //sub
-        User user = userService.getUserById(Long.parseLong(userId));
+    @PreAuthorize("hasAuthority('LV0') or hasAuthority('LV1')")
+    public ResponseEntity<ProfileDto> getProfile(Authentication authentication) {
+        String principal = authentication.getName();
+        log.info("Authentication: {}", authentication);
+        User user = userService.getUserBySubject(principal);
 
-        return ResponseEntity.ok(UserDto.toUser(user));
+        return ResponseEntity.ok(ProfileDto.from(user));
     }
 
     @PatchMapping("/signup")
-    @PreAuthorize("hasRole('LV0')")
+    @PreAuthorize("hasAuthority('LV0') or hasAuthority('LV1')")
     public ResponseEntity<Void> signup(Authentication authentication, @RequestBody UserDto userDto) {
         try {
             String userId = authentication.getName();

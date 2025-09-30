@@ -3,10 +3,12 @@ package com.app.pofolit_be.security.config;
 import com.app.pofolit_be.common.exception.CustomAccessDeniedHandler;
 import com.app.pofolit_be.common.exception.CustomAuthenticationEntryPoint;
 import com.app.pofolit_be.security.service.SignService;
+import io.swagger.v3.oas.models.PathItem.HttpMethod;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,10 +16,15 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -39,35 +46,29 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-
-                //                 3. 예외 처리 핸들러 (JWT 검증 실패 시 401/403 응답 등)
+                ) // 예외 처리 어드바이저 핸들러 넣을 부분.
                 .oauth2Login(oauth2 -> oauth2
-                                .userInfoEndpoint(userInfo -> userInfo
-                                        .oidcUserService(signService)
-                                )
-                                .successHandler(signService)
-                        // OIDC 인증 실패 시 처리 로직도 추가되어야 함
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(signService)
+                        )
+                        .successHandler(signService)
                 )
-                // 5. JWT 기반 Access Token 검증 필터 등록
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)   // 인증되지 않은 요청에 대한 진입점 (401 Unauthorized 처리)
+                        .authenticationEntryPoint(authenticationEntryPoint) // 인증 실패 (401 Unauthorized) 진입점
                         .accessDeniedHandler(accessDeniedHandler) // 인가 실패 (403 Forbidden) 핸들러
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        // (OAuth 2.1에서 인가 코드는 PKCE로 보호됨 [6-8])
+                        .requestMatchers(String.valueOf(HttpMethod.OPTIONS), "/**").permitAll()
                         .requestMatchers(
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**",
                                 "/health", "/signup/**",
-                                "/login/**", // OIDC 로그인 시작/리다이렉션 경로
+                                "/login/**",
                                 "/auth/login/**",
-                                "/api/v1/auth/refresh" // 토큰 갱신 API (Refresh Token은 쿠키로 전달되므로, 이 경로를 필터에서 제외하거나 특별 처리해야 함)
+                                "/api/v1/auth/refresh"
                         ).permitAll()
-                        // 보호된 엔드포인트: 유효한 Access Token이 필요함
                         .anyRequest().authenticated()
                 )
-                // 6. Refresh Token Rotation을 위한 HttpOnly 쿠키 사용 시 필요 (미구현)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers.frameOptions(FrameOptionsConfig::disable));
@@ -75,4 +76,16 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }
