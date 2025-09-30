@@ -83,8 +83,16 @@ spring:
     max-age: 3600 # Pre-flight 캐싱 시간
 token:
   issuer: pofolit
-  signing-algorithm: HS256
+  signing-algorithm: RS256 # 기존 jwt HS256
   secret: ${SECRET_KEY:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
+  private-key: |
+    -----BEGIN PRIVATE KEY-----
+    ${RSA_PRIVATE_KEY}
+    -----END PRIVATE KEY-----
+    public-key: |
+    -----BEGIN PUBLIC KEY-----
+    ${RSA_PUBLIC_KEY}
+    -----END PUBLIC KEY-----
   access-token-exp: 30m
   refresh-token-exp: 7d
 

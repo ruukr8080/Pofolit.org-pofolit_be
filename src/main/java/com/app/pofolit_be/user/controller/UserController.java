@@ -25,8 +25,14 @@ public class UserController {
     public ResponseEntity<ProfileDto> getProfile(Authentication authentication) {
         String principal = authentication.getName();
         log.info("Authentication: {}", authentication);
-        User user = userService.getUserBySubject(principal);
 
+        User user = userService.getUserBySubject(principal);
+        if(user == null) {
+            log.warn("User not found for subject: {}", principal);
+            return ResponseEntity.notFound().build();
+        }
+
+        log.info("User found: {}", user.getEmail());
         return ResponseEntity.ok(ProfileDto.from(user));
     }
 
@@ -34,8 +40,9 @@ public class UserController {
     @PreAuthorize("hasAuthority('LV0') or hasAuthority('LV1')")
     public ResponseEntity<Void> signup(Authentication authentication, @RequestBody UserDto userDto) {
         try {
-            String userId = authentication.getName();
-            User user = userService.getUserById(Long.parseLong(userId));
+
+            String subject = authentication.getName();
+            User user = userService.getUserBySubject(subject);
 
             userService.completeSignup(user, userDto);
             return ResponseEntity.ok().build();

@@ -38,6 +38,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     );
 
     private static UsernamePasswordAuthenticationToken getToken(String key, String role) {
+
         if(key == null || role == null) {
             throw new BadJwtException("파라미터 누락");
         }
@@ -55,6 +56,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+
         String requestPath = request.getRequestURI();
         boolean shouldSkip = skipPaths.stream().anyMatch(
                 path -> pathMatcher.match(path, requestPath)
@@ -75,14 +77,14 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         try {
-            Jwt jwt = jwtDecoder.decode(token);//JwtDecoder로 디코딩 하고 검증
+            Jwt jwt = jwtDecoder.decode(token);
             String userSub = jwt.getSubject();
             String role = jwt.getClaimAsString("role");
             UsernamePasswordAuthenticationToken authentication = getToken(userSub, role);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (BadJwtException e) {
-            log.warn("JWT token 401 Unauthorized"); // 토큰이 만료되었거나, 서명이 유효하지 않거나, 기타 JWT 관련 오류 발생 시 401
+            log.warn("[401] JWT token Unauthorized");
             SecurityContextHolder.clearContext();
         }
         filterChain.doFilter(request, response);
