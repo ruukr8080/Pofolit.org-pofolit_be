@@ -9,7 +9,7 @@ import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +60,7 @@ public class TokenService {
                 .id(UUID.randomUUID().toString())
                 .build();
         return encoder.encode(
-                JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), accessClaims)
+                JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), accessClaims)
         ).getTokenValue();
     }
 
@@ -76,7 +76,7 @@ public class TokenService {
                 .subject(user.getSubject())
                 .id(refreshJti).build();
         String refreshToken = encoder.encode(
-                JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), refreshClaims)).getTokenValue();
+                JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), refreshClaims)).getTokenValue();
         storeRefreshToken(user, refreshJti);
         return refreshToken;
     }

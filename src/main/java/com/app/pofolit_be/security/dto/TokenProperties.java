@@ -15,7 +15,9 @@ public class TokenProperties {
 
     private String issuer;
     private String signingAlgorithm;
-    private String secret;
+    private String secret; // 기존 jwt HS256
+    private String privateKey;
+    private String publicKey;
     private Duration accessTokenExp;
     private Duration refreshTokenExp;
 
