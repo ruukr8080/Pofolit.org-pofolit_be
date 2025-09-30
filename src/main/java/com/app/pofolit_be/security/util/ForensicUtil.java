@@ -1,4 +1,4 @@
-package com.app.pofolit_be.security.token;
+package com.app.pofolit_be.security.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package com.app.pofolit_be.common;
+package com.app.pofolit_be.common.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

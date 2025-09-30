@@ -1,18 +1,18 @@
 package com.app.pofolit_be.security.config;
 
+import com.app.pofolit_be.common.exception.CustomAccessDeniedHandler;
 import com.app.pofolit_be.common.exception.CustomAuthenticationEntryPoint;
-import com.app.pofolit_be.common.external.UriPath;
-import com.app.pofolit_be.security.authentication.AuthFilter;
 import com.app.pofolit_be.security.service.SignService;
+import io.swagger.v3.oas.models.PathItem.HttpMethod;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -20,61 +20,72 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
-/**
- * Spring Security 설정 클래스
- * JWT + OAuth2 콤보 인증 시스템 설정
- */
-@Slf4j
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    @Lazy
     private final SignService signService;
-    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
-    private final UriPath excludePath;
+    @Lazy
+    private final AuthenticationFilter jwtFilter;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, AuthFilter jwtFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            CorsConfigurationSource corsConfigurationSource
+    ) throws Exception {
+
         http
+                .cors(source -> source.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .cors(cors -> cors
-                        .configurationSource(corsConfigurationSource()))
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(customAuthenticationEntryPoint))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(excludePath.getFilter()).permitAll() // 문자열 배열을 직접 넘겨주는게 제일 깔끔함
-                        .anyRequest().authenticated())
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                ) // 예외 처리 어드바이저 핸들러 넣을 부분.
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(signService))
-                        .successHandler(signService))
-                .addFilterBefore(jwtFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                                .oidcUserService(signService)
+                        )
+                        .successHandler(signService)
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint) // 인증 실패 (401 Unauthorized) 진입점
+                        .accessDeniedHandler(accessDeniedHandler) // 인가 실패 (403 Forbidden) 핸들러
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(String.valueOf(HttpMethod.OPTIONS), "/**").permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**",
+                                "/health", "/signup/**",
+                                "/login/**",
+                                "/auth/login/**",
+                                "/api/v1/auth/refresh"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers.frameOptions(FrameOptionsConfig::disable));
 
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration cors = new CorsConfiguration();
-        cors.setAllowedOrigins(List.of("http://localhost:3000"));
-        cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        cors.setAllowedMethods(
-                Arrays.asList(
-                        HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PUT.name(),
-                        HttpMethod.PATCH.name(), HttpMethod.DELETE.name(), HttpMethod.OPTIONS.name()));
-        cors.setAllowCredentials(true);
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", cors);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 }

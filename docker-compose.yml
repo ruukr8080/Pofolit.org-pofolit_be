@@ -3,7 +3,7 @@ services:
     container_name: pofolit_be
     restart: always
     build: .
-#    image: ruukr8080/pofolit:1.0.0 # docker build -t ruukr8080/pofolit:1.0.0 . docker pull ruukr8080/pofolit:1.0.0
+    #    image: ruukr8080/pofolit:1.0.0 # docker build -t ruukr8080/pofolit:1.0.0 . docker pull ruukr8080/pofolit:1.0.0
     ports:
       - "8080:8080"
     depends_on:
@@ -22,9 +22,9 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-  redis:
-    image: redis:latest
-    container_name: pofolit-redis
+  redis: # docker build --pull . -t redis:7.0
+    image: redis:7.0
+    container_name: redis:7.0
     restart: always
     ports:
       - "6379:6379"

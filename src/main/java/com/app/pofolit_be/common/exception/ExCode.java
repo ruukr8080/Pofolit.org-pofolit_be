@@ -1,6 +1,5 @@
 package com.app.pofolit_be.common.exception;
 
-import com.app.pofolit_be.common.ApiResponseAdvice;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,7 +9,6 @@ import org.springframework.http.HttpStatus;
 /**
  * 구현 된 모든 {@code Custom~~~Exception}예외 클래스는
  * {@link ExCode}를 참좋하고
- * {@link ApiResponseAdvice}를 통해 클라이언트에게 전달합니다.
  */
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
