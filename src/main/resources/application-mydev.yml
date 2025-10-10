@@ -24,7 +24,7 @@ spring:
     username: sa
     password:
   jpa:
-    hibernate.ddl-auto: update #
+    hibernate.ddl-auto: validate #
     properties.hibernate.format_sql: true
     open-in-view: false
   h2:
@@ -33,7 +33,7 @@ spring:
       path: /h2-console
   flyway:
     enabled: false
-    locations: classpath:db/migration
+    locations: classpath:db-migration
     baseline-on-migrate: true
     clean-disabled: true
 
@@ -60,7 +60,7 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
               - openid
-              - profile_nickname #  profile_nickname
+              - profile_nickname
               - account_email
             client-name: kakao
         provider:
@@ -84,15 +84,11 @@ spring:
 token:
   issuer: pofolit
   signing-algorithm: RS256 # 기존 jwt HS256
-  secret: ${SECRET_KEY:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
-  private-key: |
-    -----BEGIN PRIVATE KEY-----
-    ${RSA_PRIVATE_KEY}
-    -----END PRIVATE KEY-----
-    public-key: |
-    -----BEGIN PUBLIC KEY-----
-    ${RSA_PUBLIC_KEY}
-    -----END PUBLIC KEY-----
+  #  secret: ${SECRET_KEY:popopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercverpopopopopopfolitsercver}
+  private-key:
+    - ${RSA_PRIVATE_KEY}
+  public-key:
+    - ${RSA_PUBLIC_KEY}
   access-token-exp: 30m
   refresh-token-exp: 7d
 

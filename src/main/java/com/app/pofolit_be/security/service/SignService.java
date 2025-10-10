@@ -7,6 +7,7 @@ import com.app.pofolit_be.user.entity.User;
 import com.app.pofolit_be.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,71 +23,70 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SignService extends OidcUserService implements AuthenticationSuccessHandler {
 
-    @Lazy
-    private final TokenService tokenService;
-    private final UserService userService;
-    private final TokenProperties tokenProperties;
-    @Value("${uri.auth.base}")
-    String target; // 3000
+  @Lazy
+  private final TokenService tokenService;
+  private final UserService userService;
+  private final TokenProperties tokenProperties;
+  @Value("${uri.auth.base}")
+  String target; // 3000
 
-    @Override
-    @Transactional
-    public OidcUser loadUser(OidcUserRequest oidcUserRequest) throws OAuth2AuthenticationException {
-        OidcUser oidcUser = super.loadUser(oidcUserRequest);
-        String provider = oidcUser.getIssuer().toString();
-        String subject = oidcUser.getSubject();
+  @Override
+  @Transactional
+  public OidcUser loadUser(OidcUserRequest oidcUserRequest) throws OAuth2AuthenticationException {
+    OidcUser oidcUser = super.loadUser(oidcUserRequest);
+    String provider = oidcUser.getIssuer().toString();
+    String subject = oidcUser.getSubject();
 
-        OidcIdToken idToken = oidcUser.getIdToken();
-        UserDto signedUser = new UserDto(
-                oidcUser.getEmail(),
-                oidcUser.getNickName(),
-                oidcUser.getPicture(),
-                provider.substring(provider.lastIndexOf("/") + 1),
-                subject,
-                "Lv0"
-        );
+    OidcIdToken idToken = oidcUser.getIdToken();
+    UserDto signedUser = new UserDto(
+        oidcUser.getEmail(),
+        oidcUser.getNickName(),
+        oidcUser.getPicture(),
+        provider.substring(provider.lastIndexOf("/") + 1),
+        subject,
+        "Lv0"
+    );
 
-        User user = userService.getUserBySubject(subject);
+    User user = userService.getUserBySubject(subject);
 
-        if(user == null) {
-            user = userService.createUser(signedUser);
-        } else {
-            user.updateProfile(signedUser.nickname(), signedUser.avatar());
-        }
-
-        return new OIDCUser(
-                oidcUser.getAuthorities(),
-                idToken,
-                null,
-                oidcUserRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName(),
-                user
-        );
+    if (user == null) {
+      user = userService.createUser(signedUser);
+    } else {
+      user.updateProfile(signedUser.nickname(), signedUser.avatar());
     }
 
-    @Override
-    public void onAuthenticationSuccess(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        Authentication authentication) throws IOException {
-        OIDCUser oidcUser = (OIDCUser) authentication.getPrincipal();
-        User user = oidcUser.getUser();
+    return new OIDCUser(
+        oidcUser.getAuthorities(),
+        idToken,
+        null,
+        oidcUserRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint()
+            .getUserNameAttributeName(),
+        user
+    );
+  }
 
-        String refreshToken = tokenService.issueAndStoreRefreshToken(user);
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(tokenProperties.getRefreshTokenExp())
-                .sameSite("None")
-                .build();
+  @Override
+  public void onAuthenticationSuccess(HttpServletRequest request,
+      HttpServletResponse response,
+      Authentication authentication) throws IOException {
+    OIDCUser oidcUser = (OIDCUser) authentication.getPrincipal();
+    User user = oidcUser.getUser();
 
-        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
-        response.sendRedirect(target);
-    }
+    String refreshToken = tokenService.issueAndStoreRefreshToken(user);
+    ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
+        .httpOnly(true)
+        .secure(true)
+        .path("/")
+        .maxAge(tokenProperties.getRefreshTokenExp())
+        .sameSite("None")
+        .build();
+
+    response.addHeader("Set-Cookie", refreshTokenCookie.toString());
+    response.sendRedirect(target);
+  }
 }

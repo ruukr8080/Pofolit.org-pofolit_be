@@ -6,7 +6,7 @@ CREATE TABLE users
     avatar   VARCHAR(255),
     provider VARCHAR(255),
     subject  VARCHAR(255),
-    access   VARCHAR(255),
+    role   VARCHAR(255) NOT NULL DEFAULT 'LV0',
     CONSTRAINT pk_users PRIMARY KEY (id)
 );
 

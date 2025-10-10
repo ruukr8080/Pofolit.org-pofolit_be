@@ -12,11 +12,12 @@ wrapper/
 
 ### Secrets ###
 .env
+src/main/resources/.env
 
 ### Node ###
 node_modules
 
-src/main/resources/.env
+
 
 ### STS ###
 .apt_generated
